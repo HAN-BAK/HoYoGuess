@@ -1,0 +1,15 @@
+{
+  "name": "guessmusic",
+  "version": "1.0.0",
+  "description": "HoYoGuess —— HOYO-MIX 猜歌游戏",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

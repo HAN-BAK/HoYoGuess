@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HoYoGuess</title>
+  <!-- 浏览器标签页上显示的小图标 -->
+  <link rel="icon" type="image/png" href="/icon.png">
+  <style>
+    /* ============ 全局基础样式 ============ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* ===== 主题配色变量 =====
+       深色主题（默认）：深蓝紫星空 + 金/青
+       浅色主题：淡暖黄基调 + 深金/深青（保证文字对比度） */
+    :root {
+      --gold: #FFD700;          /* 主色调：金色 */
+      --cyan: #00D4FF;          /* 主色调：亮青色 */
+      --text: #ffffff;          /* 文字主色 */
+      --text-secondary: rgba(255, 255, 255, 0.75);   /* 次级文字 */
+      --text-faint: rgba(255, 255, 255, 0.6);        /* 更淡的文字 */
+      --bg-gradient: linear-gradient(160deg, #050a24 0%, #141a4d 35%, #2c1a5e 70%, #451f73 100%);
+      --glass-bg: rgba(255, 255, 255, 0.08);         /* 磨砂玻璃面板底色 */
+      --glass-border: rgba(255, 255, 255, 0.15);
+      --glass-shadow: rgba(0, 212, 255, 0.3);
+      --btn-bg: rgba(255, 255, 255, 0.1);            /* 按钮底色 */
+      --btn-border: rgba(255, 255, 255, 0.25);
+      --btn-hover-bg: rgba(255, 255, 255, 0.18);
+      --btn-hover-shadow: rgba(0, 212, 255, 0.5);
+      --panel-bg: rgba(255, 255, 255, 0.08);         /* 小面板底色 */
+      --panel-border: rgba(255, 255, 255, 0.15);
+      --track-bg: rgba(255, 255, 255, 0.18);         /* 播放器进度条底槽 */
+      --track-hover-bg: rgba(255, 255, 255, 0.32);
+      --slider-track: rgba(255, 255, 255, 0.35);     /* 音量滑块轨道 */
+      --input-bg: rgba(255, 255, 255, 0.1);          /* 输入框底色 */
+      --input-border: rgba(255, 255, 255, 0.3);
+      --bar-border: #ffffff;                         /* 加载进度条边框 */
+      --bar-track: rgba(255, 255, 255, 0.85);        /* 加载进度条未完成部分 */
+      --bar-shadow: rgba(0, 212, 255, 0.25);
+      --bottom-bar-bg: rgba(10, 12, 34, 0.55);       /* 底部固定栏 */
+      --bottom-bar-border: rgba(255, 255, 255, 0.1);
+      --star-color: #ffffff;                         /* 星星颜色 */
+      --logo-start: #9BE8FF;                         /* 大标题渐变：浅蓝 */
+      --logo-end: #2E9BE0;                           /* 大标题渐变：稍深的蓝 */
+      --correct-bg: rgba(0, 230, 118, 0.25);         /* 答对按钮底色 */
+      --correct-bg-strong: rgba(0, 230, 118, 0.3);
+      --wrong-bg: rgba(255, 23, 68, 0.25);           /* 答错按钮底色 */
+      --wrong-bg-strong: rgba(255, 23, 68, 0.3);
+    }
+
+    /* 浅色主题：淡暖黄色基调，深色文字保证高对比度 */
+    body.theme-light {
+      --gold: #8A6400;
+      --cyan: #006E9E;
+      --text: #3B2F12;
+      --text-secondary: rgba(59, 47, 18, 0.82);
+      --text-faint: rgba(59, 47, 18, 0.6);
+      --bg-gradient: linear-gradient(160deg, #FFF9E6 0%, #FFEFC4 35%, #FFE1A0 70%, #F8CC7C 100%);
+      --glass-bg: rgba(255, 250, 235, 0.6);
+      --glass-border: rgba(190, 140, 55, 0.35);
+      --glass-shadow: rgba(190, 140, 55, 0.25);
+      --btn-bg: rgba(255, 250, 235, 0.6);
+      --btn-border: rgba(185, 135, 50, 0.55);
+      --btn-hover-bg: rgba(255, 255, 255, 0.85);
+      --btn-hover-shadow: rgba(190, 140, 55, 0.45);
+      --panel-bg: rgba(255, 250, 235, 0.55);
+      --panel-border: rgba(190, 140, 55, 0.3);
+      --track-bg: rgba(140, 100, 35, 0.25);
+      --track-hover-bg: rgba(140, 100, 35, 0.4);
+      --slider-track: rgba(140, 100, 35, 0.4);
+      --input-bg: rgba(255, 255, 255, 0.75);
+      --input-border: rgba(175, 125, 45, 0.6);
+      --bar-border: rgba(140, 100, 35, 0.9);
+      --bar-track: rgba(255, 255, 255, 0.75);
+      --bar-shadow: rgba(190, 140, 55, 0.3);
+      --bottom-bar-bg: rgba(255, 244, 214, 0.8);
+      --bottom-bar-border: rgba(190, 140, 55, 0.3);
+      --star-color: #C9973C;
+      --logo-start: #3384B8;                         /* 浅色主题下用更深的蓝，保证对比度 */
+      --logo-end: #175C8F;
+      --correct-bg: rgba(0, 180, 90, 0.7);
+      --correct-bg-strong: rgba(0, 180, 90, 0.85);
+      --wrong-bg: rgba(235, 70, 85, 0.7);
+      --wrong-bg-strong: rgba(235, 70, 85, 0.85);
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+      color: var(--text);
+      /* 星空渐变背景（主题变量控制） */
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* 星星层：固定在页面最底层，不挡点击 */
+    #stars {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      background: var(--star-color);
+      border-radius: 50%;
+      animation: twinkle 2s infinite ease-in-out;   /* 闪烁动画，速度由 JS 随机覆盖 */
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.1; }
+      50%      { opacity: 0.95; }
+    }
+
+    /* ============ 三个画面的通用容器 ============ */
+    .view {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 30px 18px 110px;
+      min-height: 100vh;
+      /* 让画面内容在屏幕垂直方向上居中显示 */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      animation: fadeIn 0.35s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+    .hidden { display: none !important; }
+
+    /* 磨砂玻璃面板（所有面板和按钮共用这个质感） */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      box-shadow: 0 0 15px var(--glass-shadow);
+    }
+
+    /* 通用按钮：磨砂玻璃 + 青色发光边框 */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 22px;
+      font-size: 16px;
+      color: var(--text);
+      background: var(--btn-bg);
+      border: 1px solid var(--btn-border);
+      border-radius: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 0 15px var(--glass-shadow);
+      transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease;
+      user-select: none;
+    }
+    .btn:hover {
+      background: var(--btn-hover-bg);
+      box-shadow: 0 0 22px var(--btn-hover-shadow);
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-gold {
+      border-color: rgba(255, 215, 0, 0.6);
+      color: var(--gold);
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.25);
+    }
+    .btn-cyan {
+      border-color: rgba(0, 212, 255, 0.6);
+      color: var(--cyan);
+    }
+
+    /* ============ 主菜单 ============ */
+    .menu-box {
+      padding: 44px 30px 36px;
+      text-align: center;
+    }
+    .logo {
+      font-size: 56px;
+      letter-spacing: 5px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--logo-start), var(--logo-end));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+    }
+    .subtitle {
+      margin: 6px 0 36px;          /* 底部留白，和下面的按钮拉开距离 */
+      color: var(--text-secondary);
+      letter-spacing: 3px;
+      font-size: 15px;
+    }
+
+    /* 主页面加载进度条 */
+    .loading-bar {
+      position: relative;
+      height: 8px;
+      max-width: 340px;
+      margin: 0 auto 36px;         /* 水平居中，下方留白 */
+      border-radius: 999px;        /* 两侧大圆角 */
+      border: 1px solid var(--bar-border);   /* 白色边框（浅色主题下为深金色） */
+      background: var(--bar-track);          /* 未完成部分为白色 */
+      overflow: hidden;
+      box-shadow: 0 0 12px var(--bar-shadow);
+    }
+    .loading-fill {
+      position: absolute;
+      top: 0;
+      left: -40%;
+      height: 100%;
+      width: 40%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--cyan), var(--gold));   /* 青到金渐变，和播放器进度条一致 */
+      animation: loadingMove 1.4s ease-in-out infinite;
+    }
+    @keyframes loadingMove {
+      0%   { left: -40%; }
+      100% { left: 100%; }
+    }
+
+    .mode-row {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+    }
+    /* 自选模式：选择曲库后填写题目数 */
+    .count-panel {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 18px;
+      border-radius: 14px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+    }
+    .count-info {
+      color: var(--cyan);
+      font-size: 15px;
+      margin-bottom: 16px;
+    }
+    .count-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    #countInput {
+      width: 90px;
+      padding: 8px 10px;
+      font-size: 16px;
+      text-align: center;
+      color: var(--text);
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      outline: none;
+    }
+    .count-max {
+      color: var(--text-faint);
+      font-size: 13px;
+    }
+    .count-btns {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    /* ============ 游戏画面：顶部状态栏 ============ */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-right: 128px;  /* 给右上角两个按钮留出位置 */
+    }
+    .score {
+      font-size: 20px;
+      color: var(--gold);
+      background: var(--panel-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 10px 18px;
+      border: 1px solid var(--panel-border);
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+      font-weight: 700;
+    }
+    .top-btns { display: flex; gap: 10px; }
+
+    /* ============ 自定义音频播放器 ============ */
+    .player {
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* 播放/暂停圆形按钮 */
+    .play-btn {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--btn-bg);
+      border: 1px solid rgba(0, 212, 255, 0.6);
+      color: var(--cyan);
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.35);
+      transition: transform 0.12s ease, box-shadow 0.2s ease;
+    }
+    .play-btn:hover { box-shadow: 0 0 24px rgba(0, 212, 255, 0.6); }
+    .play-btn:active { transform: scale(0.9); }   /* 点击缩放动画 */
+
+    /* 进度条区域 */
+    .progress-area {
+      flex: 1;
+      min-width: 180px;
+    }
+    .progress-track {
+      position: relative;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--track-bg);   /* 底槽 */
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .progress-track:hover { background: var(--track-hover-bg); }  /* 悬停变亮 */
+    .progress-fill {
+      position: absolute;
+      left: 0; top: 0;
+      height: 100%;
+      width: 0%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--cyan), var(--gold));   /* 青到金渐变 */
+    }
+    .time-text {
+      margin-top: 8px;
+      font-family: Consolas, "Courier New", monospace;   /* 等宽数字字体 */
+      font-size: 14px;
+      color: var(--text-secondary);
+      letter-spacing: 1px;
+    }
+
+    /* 音量区域 */
+    .volume-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .volume-btn {
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .volume-btn:hover { color: var(--cyan); }
+
+    /* 音量滑块（自定义轨道和圆形金色滑块） */
+    input[type="range"].volume-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100px;
+      height: 18px;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"].volume-slider::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--slider-track);   /* 半透明轨道 */
+    }
+    input[type="range"].volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      margin-top: -5px;                          /* 让滑块在轨道上居中 */
+      border-radius: 50%;
+      background: var(--gold);                   /* 金色圆形滑块 */
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+    }
+    input[type="range"].volume-slider::-moz-range-track {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--slider-track);
+    }
+    input[type="range"].volume-slider::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border: none;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+    }
+
+    /* ============ 选项按钮 A B C D ============ */
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .option {
+      width: 100%;
+      justify-content: flex-start;
+      padding: 14px 18px;
+      font-size: 17px;
+    }
+    .opt-letter {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--cyan);
+      background: rgba(0, 212, 255, 0.15);
+      border: 1px solid rgba(0, 212, 255, 0.5);
+      margin-right: 12px;
+    }
+    .option.correct {
+      background: var(--correct-bg);             /* 绿色：答对 */
+      border-color: #00E676;
+      color: #ffffff;
+      box-shadow: 0 0 18px rgba(0, 230, 118, 0.45);
+    }
+    .option.correct .opt-letter {
+      background: var(--correct-bg-strong);
+      border-color: #00E676;
+      color: #ffffff;
+    }
+    .option.wrong {
+      background: var(--wrong-bg);               /* 红色：答错 */
+      border-color: #FF1744;
+      color: #ffffff;
+      box-shadow: 0 0 18px rgba(255, 23, 68, 0.45);
+    }
+    .option.wrong .opt-letter {
+      background: var(--wrong-bg-strong);
+      border-color: #FF1744;
+      color: #ffffff;
+    }
+
+    /* ============ 底部固定栏 ============ */
+    .bottom-bar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      display: flex;
+      justify-content: center;
+      padding: 14px;
+      background: var(--bottom-bar-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 10;
+      border-top: 1px solid var(--bottom-bar-border);
+    }
+
+    /* ============ 结算画面 ============ */
+    .result-box {
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .result-box h2 {
+      font-size: 34px;
+      letter-spacing: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      margin-bottom: 30px;
+    }
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .stat {
+      min-width: 120px;
+      padding: 18px 14px;
+      border-radius: 14px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 0 12px rgba(0, 212, 255, 0.2);
+    }
+    .stat span {
+      display: block;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .stat b {
+      font-size: 26px;
+      color: var(--gold);
+    }
+    .result-extra {
+      color: var(--text-faint);
+      font-size: 13px;
+      margin-bottom: 28px;
+    }
+    .result-btns {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ============ 选择曲库画面 ============ */
+    .select-box {
+      padding: 36px 28px;
+      text-align: center;
+    }
+    .select-title {
+      font-size: 32px;
+      letter-spacing: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+    .select-sub {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 22px;
+    }
+    .select-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    .select-item {
+      width: 100%;
+      justify-content: space-between;
+      padding: 14px 18px;
+      font-size: 17px;
+    }
+    .select-item .item-name { font-weight: 700; }
+    .select-item .item-count {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .select-item.mixed .item-name { color: var(--cyan); }
+    .select-tip {
+      margin-top: 18px;
+      color: var(--text-faint);
+      font-size: 13px;
+    }
+    .select-back {
+      margin-top: 26px;
+    }
+
+    /* 浅色主题下答对/答错按钮改用深色文字，保证对比度 */
+    body.theme-light .option.correct,
+    body.theme-light .option.correct .opt-letter {
+      color: #064A22;
+    }
+    body.theme-light .option.wrong,
+    body.theme-light .option.wrong .opt-letter {
+      color: #7A1020;
+    }
+
+    /* 右上角的圆形小按钮（背景音乐开关 + 明暗主题切换） */
+    .theme-btn {
+      position: fixed;
+      top: 18px;
+      z-index: 20;
+      width: 46px;
+      height: 46px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 22px;
+      line-height: 1;
+    }
+    #bgmBtn   { right: 74px; }   /* 背景音乐开关：靠左一点 */
+    #themeBtn { right: 18px; }   /* 主题切换：最右边 */
+
+    /* 小屏幕适配 */
+    @media (max-width: 520px) {
+      .view { padding: 24px 12px 100px; }
+      .logo { font-size: 40px; letter-spacing: 3px; }
+      .menu-box { padding: 30px 18px 26px; }
+      .result-box { padding: 30px 16px; }
+      .mode-row { flex-direction: column; align-items: stretch; }
+      .top-bar { flex-direction: column; align-items: stretch; }
+      .top-btns { justify-content: flex-end; }
+      .player-row { gap: 10px; }
+      .volume-area { width: 100%; justify-content: flex-end; }
+      .volume-slider { width: 80px; }
+      .option { font-size: 15px; padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 星空背景（星星由 JS 动态生成） -->
+  <div id="stars"></div>
+
+  <!-- 背景音乐开关按钮 -->
+  <button class="btn theme-btn" id="bgmBtn" title="背景音乐开关">
+    <span id="bgmIcon">🎵</span>
+  </button>
+
+  <!-- 明暗主题切换按钮 -->
+  <button class="btn theme-btn" id="themeBtn" title="切换明暗主题">
+    <span id="themeIcon">☀️</span>
+  </button>
+
+  <!-- 两个隐藏的音频元素：一个放背景音乐，一个放当前题目歌曲 -->
+  <audio id="bgmAudio" loop></audio>
+  <audio id="songAudio" preload="auto"></audio>
+
+  <!-- ================= 画面一：主菜单 ================= -->
+  <section id="mainMenu" class="view">
+    <div class="menu-box glass">
+      <h1 class="logo">HoYoGuess</h1>
+      <p class="subtitle">HOYO-MIX · 猜歌游戏</p>
+
+      <!-- 主页面加载进度条（内容加载完自动隐藏） -->
+      <div class="loading-bar" id="loadingBar">
+        <div class="loading-fill"></div>
+      </div>
+
+      <div class="mode-row">
+        <button class="btn btn-gold" id="btnCustom">自选模式</button>
+        <button class="btn btn-cyan" id="btnEndless">无尽模式</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= 画面一·五：选择曲库 ================= -->
+  <section id="gameSelectView" class="view hidden">
+    <div class="select-box glass">
+      <h2 class="select-title">选择曲库</h2>
+      <p class="select-sub" id="selectSub">正在加载游戏列表…</p>
+      <div class="select-list" id="selectList"></div>
+      <p class="select-tip" id="selectTip"></p>
+
+      <!-- 自选模式第二步：选择曲库后填写题目数 -->
+      <div class="count-panel hidden" id="countPanel">
+        <p class="count-info" id="countInfo"></p>
+        <div class="count-row">
+          <label for="countInput">每局题目数：</label>
+          <input type="number" id="countInput" value="10" min="1" max="999">
+          <span class="count-max" id="countMax"></span>
+        </div>
+        <div class="count-btns">
+          <button class="btn btn-gold" id="btnCountStart">开始游戏</button>
+          <button class="btn" id="btnCountBack">重新选择</button>
+        </div>
+      </div>
+
+      <div class="select-back">
+        <button class="btn btn-cyan" id="btnSelectBack">返回主界面</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 画面二：游戏 ================= -->
+  <section id="gameView" class="view hidden">
+    <!-- 顶部状态栏 -->
+    <div class="top-bar">
+      <div class="score" id="scoreText">得分：0</div>
+      <div class="top-btns">
+        <button class="btn" id="btnSkip">跳过</button>
+        <button class="btn" id="btnEnd">结束本轮</button>
+      </div>
+    </div>
+
+    <!-- 自定义音频播放器（完全手写，不用浏览器自带控件） -->
+    <div class="player glass">
+      <div class="player-row">
+        <!-- 播放/暂停圆形按钮 -->
+        <button class="play-btn" id="playBtn" title="播放 / 暂停">
+          <svg id="iconPlay" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M8 5v14l11-7z"></path>
+          </svg>
+          <svg id="iconPause" class="hidden" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M6 5h4v14H6zM14 5h4v14h-4z"></path>
+          </svg>
+        </button>
+
+        <!-- 进度条 + 时间标签 -->
+        <div class="progress-area">
+          <div class="progress-track" id="progressTrack">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="time-text" id="timeText">00:00 / 00:00</div>
+        </div>
+
+        <!-- 音量控制 -->
+        <div class="volume-area">
+          <button class="volume-btn" id="volumeBtn" title="静音开关">
+            <svg id="iconVol" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M3 9v6h4l5 5V4L7 9H3z"></path>
+              <path d="M16.5 12a4.5 4.5 0 0 0-2.5-4.03v8.05A4.5 4.5 0 0 0 16.5 12z"></path>
+              <path d="M14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z"></path>
+            </svg>
+            <svg id="iconMute" class="hidden" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M3 9v6h4l5 5V4L7 9H3z"></path>
+              <path d="M16.5 12a4.5 4.5 0 0 0-2.5-4.03v2.21l2.76 2.76c.37-.41.64-.88.74-1.42v-2.06z"></path>
+              <path d="M14 3.23v2.06a6.9 6.9 0 0 1 1.28 1.14l1.61 1.61A9 9 0 0 0 14 3.23z"></path>
+              <path d="M2.27 2.27 1 3.54 4.46 7H3v10h4l5 5v-6.46l4.27 4.27A9.1 9.1 0 0 1 14 20.77v2.06a11 11 0 0 0 4.05-2.36l2.36 2.36 1.27-1.27L2.27 2.27z"></path>
+            </svg>
+          </button>
+          <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="1">
+        </div>
+      </div>
+    </div>
+
+    <!-- 四个选项按钮 A B C D -->
+    <div class="options" id="options">
+      <button class="option btn" data-index="0">
+        <span class="opt-letter">A</span><span class="opt-name"></span>
+      </button>
+      <button class="option btn" data-index="1">
+        <span class="opt-letter">B</span><span class="opt-name"></span>
+      </button>
+      <button class="option btn" data-index="2">
+        <span class="opt-letter">C</span><span class="opt-name"></span>
+      </button>
+      <button class="option btn" data-index="3">
+        <span class="opt-letter">D</span><span class="opt-name"></span>
+      </button>
+    </div>
+
+    <!-- 底部固定栏 -->
+    <div class="bottom-bar">
+      <button class="btn btn-cyan" id="btnBack">返回主界面</button>
+    </div>
+  </section>
+
+  <!-- ================= 画面三：结算 ================= -->
+  <section id="resultView" class="view hidden">
+    <div class="result-box glass">
+      <h2 id="resultTitle">游戏结束</h2>
+      <div class="stats">
+        <div class="stat"><span>答对题数</span><b id="statCorrect">0</b></div>
+        <div class="stat"><span>答错题数</span><b id="statWrong">0</b></div>
+        <div class="stat"><span>正确率</span><b id="statAccuracy">—</b></div>
+      </div>
+      <p class="result-extra" id="resultExtra">（共出题 0 道，跳过 0 道）</p>
+      <div class="result-btns">
+        <button class="btn btn-gold" id="btnAgain">再来一局</button>
+        <button class="btn btn-cyan" id="btnBack2">返回主界面</button>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // ============================================================
+    //  前端所有逻辑都写在这里：歌库加载、背景音乐、出题计分、播放器
+    // ============================================================
+
+    // ---------- 1. 获取页面元素（DOM 引用） ----------
+    const mainMenu   = document.getElementById('mainMenu');
+    const gameView   = document.getElementById('gameView');
+    const resultView = document.getElementById('resultView');
+    const gameSelectView = document.getElementById('gameSelectView');
+    const selectSub      = document.getElementById('selectSub');
+    const selectList     = document.getElementById('selectList');
+    const selectTip      = document.getElementById('selectTip');
+    const countPanel     = document.getElementById('countPanel');
+    const countInfo      = document.getElementById('countInfo');
+    const countInput     = document.getElementById('countInput');
+    const countMax       = document.getElementById('countMax');
+    const scoreText     = document.getElementById('scoreText');
+    const optionButtons = document.querySelectorAll('.option');
+    const timeText      = document.getElementById('timeText');
+    const loadingBar    = document.getElementById('loadingBar');
+
+    // 音频元素
+    const bgmAudio  = document.getElementById('bgmAudio');   // 背景音乐
+    const songAudio = document.getElementById('songAudio');  // 当前题目歌曲
+
+    // 播放器控件
+    const playBtn       = document.getElementById('playBtn');
+    const iconPlay      = document.getElementById('iconPlay');
+    const iconPause     = document.getElementById('iconPause');
+    const progressTrack = document.getElementById('progressTrack');
+    const progressFill  = document.getElementById('progressFill');
+    const volumeSlider  = document.getElementById('volumeSlider');
+    const volumeBtn     = document.getElementById('volumeBtn');
+    const iconVol       = document.getElementById('iconVol');
+    const iconMute      = document.getElementById('iconMute');
+
+    // ---------- 2. 游戏状态变量 ----------
+    let songs = [];             // 歌库（文件名，不含 .mp3 后缀）
+    let mode = 'custom';        // 当前模式：'custom' 自选模式 / 'endless' 无尽模式
+    let customTotal = 10;       // 自选模式的题目总数（默认 10）
+    let queue = [];             // 出题队列（打乱后的歌单）
+    let queueIndex = 0;         // 队列当前取到第几首
+    let currentSong = '';       // 当前题目对应的歌曲名
+    let correctAnswer = '';     // 当前题目的正确答案
+    let optionNames = [];       // 当前题目的 4 个选项（数组）
+    let questionLocked = false; // 本题是否已经作答/跳过（防止重复点击）
+    let answerTimer = null;     // 答完题后 1.5 秒跳下一题的定时器
+
+    // 计分变量（含义见需求说明）
+    let correct = 0;            // 答对数
+    let wrong = 0;              // 答错数
+    let answered = 0;           // 已答题数 = correct + wrong
+    let total = 0;              // 累计出题数（含跳过和已答）
+    let currentView = 'main';   // 当前显示的界面
+    let gameScope = 'mixed';    // 当前对局范围：'mixed' 混合模式，或游戏文件夹名
+    let songPool = [];          // 当前对局的曲库（按所选游戏筛选后的歌曲）
+    let pendingMode = 'custom'; // 选好模式后、还没选游戏前的暂存模式
+
+    // 背景音乐相关
+    let bgmFile = null;         // 背景音乐文件名（取 BGMusic 里第一个）
+    let bgmUnlocked = false;    // 是否已获得浏览器播放权限
+    let bgmEnabled = true;      // 背景音乐开关（默认开）
+    let lowSongsAlerted = false;// 页面加载后“歌太少”只弹一次窗
+
+    // ---------- 3. 工具函数 ----------
+    // 洗牌：把数组随机打乱后返回新数组（不会改原数组）
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // 时间格式化：秒 -> "mm:ss"（如 83 秒 -> "01:23"）
+    function fmtTime(sec) {
+      if (!isFinite(sec) || sec < 0) sec = 0;
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    // 把歌曲的相对路径（如 "专辑A/歌1"）编码成可访问的 URL，
+    // 每一层文件夹分别编码，中文文件名和中文文件夹名都能正常访问
+    function encodeSongUrl(name) {
+      return name.split('/').map(encodeURIComponent).join('/') + '.mp3';
+    }
+
+    // 选项按钮上只显示歌名（去掉前面的文件夹路径），
+    // 例如 "原神-XXX/歌名" 在选项上只显示 "歌名"
+    function displayName(name) {
+      const idx = name.lastIndexOf('/');
+      return idx >= 0 ? name.slice(idx + 1) : name;
+    }
+
+    // ---------- 4. 歌库加载 ----------
+    async function loadSongs() {
+      try {
+        const res = await fetch('/api/songs');      // 请求后端拿歌单
+        const list = await res.json();
+        songs = list;
+        // 歌太少时弹窗提示（每次刷新页面只弹一次）
+        if (songs.length < 4 && !lowSongsAlerted) {
+          lowSongsAlerted = true;
+          alert('小派蒙正在努力维护中哦');
+        }
+      } catch (err) {
+        // 获取歌单失败就静默跳过，不打扰用户
+      }
+    }
+
+    // ---------- 4.5 选择曲库（按游戏文件夹） ----------
+    // 从歌单里找出 Music 下一级的所有游戏文件夹（同时统计每个文件夹的曲目数）
+    function getGameFolders() {
+      const map = {};
+      songs.forEach(s => {
+        const idx = s.indexOf('/');
+        if (idx > 0) {
+          const folder = s.slice(0, idx);
+          map[folder] = (map[folder] || 0) + 1;
+        }
+      });
+      return Object.keys(map).sort().map(name => ({ name, count: map[name] }));
+    }
+
+    // 显示“选择曲库”界面（m：'custom' 自选模式 / 'endless' 无尽模式）
+    function showGameSelect(m) {
+      if (songs.length < 4) {
+        alert('小派蒙正在努力维护中哦');
+        return;
+      }
+      pendingMode = m;
+
+      // 副标题显示当前模式信息
+      const modeText = m === 'custom'
+        ? '自选模式'
+        : '无尽模式';
+      selectSub.textContent = '当前模式：' + modeText;
+
+      // 每次进入都回到“选择曲库”这一步（隐藏题目数填写）
+      countPanel.classList.add('hidden');
+      selectList.classList.remove('hidden');
+      selectTip.classList.remove('hidden');
+
+      // 清空列表
+      selectList.innerHTML = '';
+      const folders = getGameFolders();
+
+      // 混合模式排在列表第一个：从全部歌曲里随机出题
+      const mixedBtn = document.createElement('button');
+      mixedBtn.className = 'btn select-item mixed';
+      const mixedName = document.createElement('span');
+      mixedName.className = 'item-name';
+      mixedName.textContent = '混合模式';
+      const mixedCount = document.createElement('span');
+      mixedCount.className = 'item-count';
+      mixedCount.textContent = songs.length + ' 首';
+      mixedBtn.appendChild(mixedName);
+      mixedBtn.appendChild(mixedCount);
+      mixedBtn.addEventListener('click', () => chooseScope('mixed'));
+      selectList.appendChild(mixedBtn);
+
+      // 混合模式后面再逐个添加游戏文件夹按钮
+      folders.forEach(folder => {
+        const btn = document.createElement('button');
+        btn.className = 'btn select-item';
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'item-name';
+        nameSpan.textContent = folder.name;
+        const countSpan = document.createElement('span');
+        countSpan.className = 'item-count';
+        countSpan.textContent = folder.count + ' 首';
+        btn.appendChild(nameSpan);
+        btn.appendChild(countSpan);
+        btn.addEventListener('click', () => chooseScope(folder.name));
+        selectList.appendChild(btn);
+      });
+
+      // 没有按游戏分类的文件夹时给个提示
+      selectTip.textContent = folders.length === 0
+        ? '未发现按游戏分类的文件夹，可使用混合模式'
+        : '该游戏曲目不足 20 首时，错误答案会从全部歌库中抽取';
+
+      switchView('select');
+    }
+
+    // 选好曲库后，进入下一步
+    function chooseScope(scope) {
+      if (scope === 'mixed') {
+        gameScope = 'mixed';
+        songPool = songs.slice();            // 全部歌曲
+      } else {
+        gameScope = scope;                   // 记录选中的游戏文件夹名
+        // 只保留这个游戏文件夹（含其所有子目录）里的歌曲
+        songPool = songs.filter(s => s.indexOf(scope + '/') === 0);
+        if (songPool.length === 0) {
+          alert('这个游戏还没有曲目哦');
+          return;
+        }
+      }
+      if (pendingMode === 'custom') {
+        showCountStep();                 // 自选模式：先填写题目数
+      } else {
+        startGame('endless');            // 无尽模式：直接开始
+      }
+    }
+
+    // 自选模式第二步：显示题目数填写（上限 = 所选曲库的歌曲数）
+    function showCountStep() {
+      selectList.classList.add('hidden');
+      selectTip.classList.add('hidden');
+      countPanel.classList.remove('hidden');
+      selectSub.textContent = '自选模式 · 请填写题目数';
+
+      const scopeName = gameScope === 'mixed' ? '混合模式' : gameScope;
+      countInfo.textContent = '已选择：' + scopeName + '（共 ' + songPool.length + ' 首）';
+      countMax.textContent = '最多 ' + songPool.length + ' 首';
+      countInput.max = songPool.length;
+      countInput.value = Math.min(10, songPool.length);   // 默认 10 题，但不超曲库数量
+    }
+
+    // 点击“开始游戏”：题目数不能超过所选曲库的歌曲数
+    function startCountGame() {
+      let n = parseInt(countInput.value, 10);
+      if (isNaN(n) || n < 1) n = 1;
+      if (n > songPool.length) {
+        alert('该曲库只有 ' + songPool.length + ' 首，题目数已自动调整为 ' + songPool.length);
+        n = songPool.length;
+      }
+      customTotal = n;
+      startGame('custom');
+    }
+
+    // 返回“选择曲库”这一步
+    function backToSelectList() {
+      countPanel.classList.add('hidden');
+      selectList.classList.remove('hidden');
+      selectTip.classList.remove('hidden');
+      selectSub.textContent = '当前模式：自选模式';
+    }
+
+    // ---------- 5. 背景音乐 ----------
+    async function setupBGM() {
+      try {
+        const res = await fetch('/api/bgmusic');    // 请求后端拿背景音乐列表
+        const list = await res.json();
+        if (!list.length) {
+          bgmBtn.disabled = true;                   // 没有背景音乐时禁用开关按钮
+          return;
+        }
+        bgmFile = list[0];                          // 取第一个文件
+        bgmAudio.src = '/bgmusic/' + encodeURIComponent(bgmFile);
+        bgmAudio.volume = 0.35;                     // 背景音乐音量小一点
+        // 先尝试自动播放；如果被浏览器拦截，就走下面的“首次点击解锁”
+        bgmAudio.play().then(() => { bgmUnlocked = true; }).catch(() => {});
+      } catch (err) {
+        // 出错就静默跳过，不打扰用户
+      }
+    }
+
+    // 浏览器自动播放策略：第一次点击页面时先播放一下再暂停，获得播放权限
+    function unlockBGM() {
+      if (bgmUnlocked || !bgmFile) return;
+      bgmUnlocked = true;
+      document.removeEventListener('pointerdown', unlockBGM);
+      bgmAudio.play()
+        .then(() => { bgmAudio.pause(); applyBGM(); })
+        .catch(() => {});
+    }
+    document.addEventListener('pointerdown', unlockBGM);
+
+    // 根据当前界面控制背景音乐：
+    // 只有游戏画面暂停；主菜单、选择曲库、填写题目数、结算画面都播放
+    function applyBGM() {
+      if (!bgmFile || !bgmEnabled) {
+        bgmAudio.pause();                           // 没有音乐或开关关闭时，一律暂停
+        return;
+      }
+      if (currentView === 'game') {
+        bgmAudio.pause();
+      } else {
+        bgmAudio.play().catch(() => {});
+      }
+    }
+
+    // ---------- 5.5 明暗主题切换 ----------
+    const themeBtn  = document.getElementById('themeBtn');
+    const themeIcon = document.getElementById('themeIcon');
+
+    // 应用主题：'dark' 深色（默认）/ 'light' 浅色
+    function applyTheme(theme) {
+      document.body.classList.toggle('theme-light', theme === 'light');
+      themeIcon.textContent = theme === 'light' ? '🌙' : '☀️';
+      try {
+        localStorage.setItem('hoyoguess_theme', theme);   // 记住选择，下次打开仍是这个主题
+      } catch (err) { /* 隐私模式下 localStorage 可能不可用，忽略即可 */ }
+    }
+
+    themeBtn.addEventListener('click', () => {
+      const isLight = document.body.classList.contains('theme-light');
+      applyTheme(isLight ? 'dark' : 'light');
+    });
+
+    // 初始化主题：优先使用上次保存的选择，没有就默认深色
+    (function initTheme() {
+      let saved = 'dark';
+      try {
+        saved = localStorage.getItem('hoyoguess_theme') || 'dark';
+      } catch (err) { /* 忽略 */ }
+      applyTheme(saved);
+    })();
+
+    // ---------- 5.6 背景音乐开关 ----------
+    const bgmBtn  = document.getElementById('bgmBtn');
+    const bgmIcon = document.getElementById('bgmIcon');
+
+    // 刷新开关按钮的图标
+    function updateBgmIcon() {
+      bgmIcon.textContent = bgmEnabled ? '🎵' : '🔇';
+    }
+
+    // 点击按钮：开 / 关背景音乐
+    bgmBtn.addEventListener('click', () => {
+      bgmEnabled = !bgmEnabled;
+      try {
+        localStorage.setItem('hoyoguess_bgm', bgmEnabled ? 'on' : 'off');   // 记住选择
+      } catch (err) { /* 隐私模式下忽略 */ }
+      updateBgmIcon();
+      applyBGM();    // 立即生效：开着就在主菜单播放，关了就暂停
+    });
+
+    // 初始化开关：优先使用上次保存的选择
+    (function initBgmToggle() {
+      try {
+        const saved = localStorage.getItem('hoyoguess_bgm');
+        bgmEnabled = saved !== 'off';
+      } catch (err) { /* 忽略 */ }
+      updateBgmIcon();
+    })();
+
+    // ---------- 6. 界面切换 ----------
+    function switchView(name) {
+      mainMenu.classList.toggle('hidden', name !== 'main');
+      gameSelectView.classList.toggle('hidden', name !== 'select');
+      gameView.classList.toggle('hidden', name !== 'game');
+      resultView.classList.toggle('hidden', name !== 'result');
+      currentView = name;
+      bgmBtn.classList.toggle('hidden', name === 'game');   // 游戏画面隐藏背景音乐开关
+      // 只有“进入”结算画面这个动作才从头播放背景音乐；
+      // 之后在结算画面点开关恢复播放时，会从当前位置继续
+      if (name === 'result') {
+        bgmAudio.currentTime = 0;
+      }
+      applyBGM();    // 切换界面后，按规则播放/暂停背景音乐
+    }
+
+    // ---------- 7. 自定义播放器 ----------
+    // 播放/暂停按钮
+    playBtn.addEventListener('click', () => {
+      if (!songAudio.getAttribute('src')) return;   // 还没有歌曲时不处理
+      if (songAudio.paused) {
+        songAudio.play().catch(() => {});
+      } else {
+        songAudio.pause();
+      }
+    });
+
+    // 播放/暂停时切换图标
+    songAudio.addEventListener('play', () => {
+      iconPlay.classList.add('hidden');
+      iconPause.classList.remove('hidden');
+    });
+    songAudio.addEventListener('pause', () => {
+      iconPause.classList.add('hidden');
+      iconPlay.classList.remove('hidden');
+    });
+
+    // 进度条随时间更新
+    songAudio.addEventListener('timeupdate', () => {
+      const d = songAudio.duration || 0;
+      const pct = d > 0 ? (songAudio.currentTime / d) * 100 : 0;
+      progressFill.style.width = pct + '%';
+      timeText.textContent = fmtTime(songAudio.currentTime) + ' / ' + fmtTime(d);
+    });
+    songAudio.addEventListener('loadedmetadata', () => {
+      const d = songAudio.duration || 0;
+      timeText.textContent = '00:00 / ' + fmtTime(d);
+    });
+
+    // 点击/拖动进度条跳转
+    let isDragging = false;
+    function seekTo(e) {
+      const d = songAudio.duration;
+      if (!d || !isFinite(d)) return;
+      const rect = progressTrack.getBoundingClientRect();
+      let ratio = (e.clientX - rect.left) / rect.width;
+      ratio = Math.max(0, Math.min(1, ratio));      // 限制在 0~1 之间
+      songAudio.currentTime = ratio * d;
+      progressFill.style.width = (ratio * 100) + '%';
+    }
+    progressTrack.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      progressTrack.setPointerCapture(e.pointerId);
+      seekTo(e);
+    });
+    progressTrack.addEventListener('pointermove', (e) => {
+      if (isDragging) seekTo(e);
+    });
+    progressTrack.addEventListener('pointerup', () => { isDragging = false; });
+    progressTrack.addEventListener('pointercancel', () => { isDragging = false; });
+
+    // 音量滑块
+    let lastVolume = 1;   // 记住静音前的音量，方便恢复
+    volumeSlider.addEventListener('input', () => {
+      const v = parseFloat(volumeSlider.value);
+      songAudio.volume = v;
+      updateVolumeIcon(v);
+    });
+    // 点击喇叭图标 = 静音/取消静音
+    volumeBtn.addEventListener('click', () => {
+      if (songAudio.volume > 0) {
+        lastVolume = songAudio.volume;
+        songAudio.volume = 0;
+        volumeSlider.value = 0;
+      } else {
+        songAudio.volume = lastVolume || 1;
+        volumeSlider.value = songAudio.volume;
+      }
+      updateVolumeIcon(songAudio.volume);
+    });
+    function updateVolumeIcon(v) {
+      iconVol.classList.toggle('hidden', v <= 0);
+      iconMute.classList.toggle('hidden', v > 0);
+    }
+
+    // ---------- 8. 出题与计分 ----------
+    // 更新顶部得分显示
+    function updateScore() {
+      if (mode === 'custom') {
+        scoreText.textContent = '得分：' + correct + ' / ' + customTotal;
+      } else {
+        scoreText.textContent = '得分：' + correct + ' / ∞';
+      }
+    }
+
+    // 出下一道题
+    function loadQuestion() {
+      // 自选模式：出题数达到设定值就自动弹出结算
+      if (mode === 'custom' && total >= customTotal) {
+        showResult();
+        return;
+      }
+
+      // 队列取完了就重新打乱（无尽模式循环用；自选模式的队列刚好取完）
+      if (queueIndex >= queue.length) {
+        queue = shuffle(songPool);
+        queueIndex = 0;
+      }
+
+      currentSong = queue[queueIndex++];
+      total++;    // 每出一道题，累计出题数 +1（作答或跳过都算）
+
+      // 干扰项来源：
+      // - 混合模式：从全部歌曲里挑
+      // - 指定游戏：该游戏曲目 >= 20 首时只从本游戏挑；
+      //   不足 20 首时，允许从全部歌库里挑（跨游戏当干扰项）
+      let distractorPool;
+      if (gameScope === 'mixed' || songPool.length < 20) {
+        distractorPool = songs;
+      } else {
+        distractorPool = songPool;
+      }
+
+      // 生成 4 个选项：1 个正确答案 + 3 个随机干扰项（不重复、不含正确答案）
+      const others = shuffle(distractorPool.filter(s => s !== currentSong));
+      optionNames = shuffle([currentSong].concat(others.slice(0, 3)));
+      correctAnswer = currentSong;
+
+      // 还原按钮状态
+      questionLocked = false;
+      optionButtons.forEach((btn, i) => {
+        btn.classList.remove('correct', 'wrong');
+        btn.disabled = false;
+        btn.querySelector('.opt-name').textContent = displayName(optionNames[i]);
+      });
+
+      // 载入这首歌并尝试自动播放
+      songAudio.src = '/audio/' + encodeSongUrl(currentSong);
+      songAudio.volume = parseFloat(volumeSlider.value);
+      songAudio.play().catch(() => {});
+
+      updateScore();
+    }
+
+    // 点击选项作答
+    function answerQuestion(i) {
+      if (questionLocked) return;      // 本题已作答，忽略
+      questionLocked = true;
+
+      const chosen = optionNames[i];
+      answered++;                      // 已答题数 +1
+      const ok = (chosen === correctAnswer);
+
+      if (ok) {
+        correct++;                     // 答对
+        optionButtons[i].classList.add('correct');      // 变绿
+      } else {
+        wrong++;                       // 答错
+        optionButtons[i].classList.add('wrong');        // 点错的变红
+        const idx = optionNames.indexOf(correctAnswer);
+        optionButtons[idx].classList.add('correct');    // 同时高亮正确答案
+      }
+      optionButtons.forEach(b => { b.disabled = true; });  // 禁用所有选项
+
+      updateScore();
+      // 1.5 秒后自动进入下一题
+      answerTimer = setTimeout(() => {
+        answerTimer = null;
+        loadQuestion();
+      }, 1500);
+    }
+
+    // 跳过本题：total 在出题时已 +1，这里不再加；answered 不变
+    function skipQuestion() {
+      if (questionLocked) return;
+      questionLocked = true;
+      loadQuestion();
+    }
+
+    // 结束本轮：立即弹出结算
+    function endRound() {
+      if (answerTimer) { clearTimeout(answerTimer); answerTimer = null; }
+      songAudio.pause();
+      showResult();
+    }
+
+    // 开始游戏（m：'custom' 或 'endless'，曲库范围在 chooseScope 里已设置好）
+    function startGame(m) {
+      if (songs.length < 4) {
+        alert('小派蒙正在努力维护中哦');
+        return;
+      }
+      if (songPool.length === 0) {
+        alert('这个游戏还没有曲目哦');
+        return;
+      }
+      if (answerTimer) { clearTimeout(answerTimer); answerTimer = null; }
+
+      mode = m;
+      correct = 0; wrong = 0; answered = 0; total = 0;   // 重置计分
+      queueIndex = 0;
+
+      if (m === 'custom') {
+        // 自选模式：打乱当前曲库后按顺序取，不够就循环从头再取
+        const shuffled = shuffle(songPool);
+        queue = [];
+        while (queue.length < customTotal) {
+          queue.push(...shuffled);
+        }
+        queue = queue.slice(0, customTotal);
+      } else {
+        // 无尽模式：打乱当前曲库，取完再打乱
+        queue = shuffle(songPool);
+      }
+
+      switchView('game');   // 进入游戏画面（背景音乐自动暂停）
+      loadQuestion();
+    }
+
+    // ---------- 9. 结算画面 ----------
+    function showResult() {
+      songAudio.pause();     // 停止当前歌曲
+      document.getElementById('resultTitle').textContent =
+        mode === 'endless' ? '本轮统计' : '游戏结束';
+      document.getElementById('statCorrect').textContent = correct;
+      document.getElementById('statWrong').textContent = wrong;
+
+      // 正确率 = 答对数 / 已答题数；一题没答则显示“暂无作答”
+      const acc = answered > 0
+        ? Math.round((correct / answered) * 100) + '%'
+        : '暂无作答';
+      document.getElementById('statAccuracy').textContent = acc;
+
+      // 跳过数 = 累计出题数 - 已答题数
+      const skipped = total - answered;
+      document.getElementById('resultExtra').textContent =
+        '（共出题 ' + total + ' 道，跳过 ' + skipped + ' 道）';
+
+      switchView('result');   // 进入结算画面（背景音乐保持暂停）
+    }
+
+    // 再来一局：重置所有变量，沿用当前模式和题数
+    function restartGame() {
+      startGame(mode);
+    }
+
+    // 返回主界面：停止播放、重置进度、恢复背景音乐
+    function backToMain() {
+      if (answerTimer) { clearTimeout(answerTimer); answerTimer = null; }
+      songAudio.pause();
+      songAudio.removeAttribute('src');
+      songAudio.load();          // 清空当前歌曲
+      correct = 0; wrong = 0; answered = 0; total = 0;
+      queue = []; queueIndex = 0;
+      gameScope = 'mixed';
+      songPool = [];
+      switchView('main');
+      loadSongs();               // 顺便刷新歌库数量
+    }
+
+    // ---------- 10. 事件绑定 ----------
+    // 主菜单
+    document.getElementById('btnCustom').addEventListener('click', () => {
+      showGameSelect('custom');   // 自选模式：先选曲库，再填题目数
+    });
+    document.getElementById('btnEndless').addEventListener('click', () => {
+      showGameSelect('endless');
+    });
+    // 选择曲库画面
+    document.getElementById('btnSelectBack').addEventListener('click', backToMain);
+    document.getElementById('btnCountStart').addEventListener('click', startCountGame);
+    document.getElementById('btnCountBack').addEventListener('click', backToSelectList);
+    // 题目数输入框里按回车等于点“开始游戏”
+    countInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        startCountGame();
+      }
+    });
+
+    // 游戏画面
+    document.getElementById('btnSkip').addEventListener('click', skipQuestion);
+    document.getElementById('btnEnd').addEventListener('click', endRound);
+    document.getElementById('btnBack').addEventListener('click', backToMain);
+
+    // 四个选项
+    optionButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        answerQuestion(parseInt(btn.dataset.index, 10));
+      });
+    });
+
+    // 键盘控制：PC 端按 A / B / C / D 键选择对应选项
+    document.addEventListener('keydown', (e) => {
+      if (currentView !== 'game') return;                 // 只在游戏画面生效
+      // 在输入框里打字时不触发（例如设置题目数时按 A）
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;     // 组合键不触发
+      const keyMap = { a: 0, b: 1, c: 2, d: 3 };
+      const idx = keyMap[e.key.toLowerCase()];
+      if (idx !== undefined) {
+        e.preventDefault();
+        answerQuestion(idx);
+      }
+    });
+
+    // 结算画面
+    document.getElementById('btnAgain').addEventListener('click', restartGame);
+    document.getElementById('btnBack2').addEventListener('click', backToMain);
+
+    // ---------- 11. 页面初始化 ----------
+    function createStars() {
+      const wrap = document.getElementById('stars');
+      for (let i = 0; i < 120; i++) {
+        const s = document.createElement('span');
+        s.className = 'star';
+        const size = (Math.random() * 2 + 1).toFixed(1) + 'px';   // 1~3px
+        s.style.width = size;
+        s.style.height = size;
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top = Math.random() * 100 + '%';
+        s.style.animationDuration = (Math.random() * 2 + 1.5) + 's';  // 随机闪烁速度
+        s.style.animationDelay = (Math.random() * 3) + 's';
+        wrap.appendChild(s);
+      }
+    }
+
+    createStars();    // 生成星空
+
+    // 歌库和背景音乐都加载完成后，隐藏主页面加载进度条
+    Promise.all([loadSongs(), setupBGM()]).then(() => {
+      loadingBar.classList.add('hidden');
+    });
+  </script>
+</body>
+</html>
