@@ -6,6 +6,8 @@
   <title>HoYoGuess</title>
   <!-- 浏览器标签页上显示的小图标 -->
   <link rel="icon" type="image/png" href="/icon.png">
+  <!-- 提前与音频 CDN 建立连接，加快歌曲加载速度（未配置 CDN 时可改回 B2 下载域名） -->
+  <link rel="preconnect" href="https://audio.mihoyo.cards">
   <style>
     /* ============ 全局基础样式 ============ */
     * {
@@ -813,6 +815,9 @@
     // 音频元素
     const bgmAudio  = document.getElementById('bgmAudio');   // 背景音乐
     const songAudio = document.getElementById('songAudio');  // 当前题目歌曲
+    // 隐藏的预加载音频：提前拉取下一首歌，切题时几乎秒开
+    const preloadAudio = document.createElement('audio');
+    preloadAudio.preload = 'auto';
 
     // 播放器控件
     const playBtn       = document.getElementById('playBtn');
@@ -1284,6 +1289,13 @@
       updateScore();
     }
 
+    // 提前预加载下一首歌（利用答题后的等待时间，切题时几乎秒开）
+    function preloadNextSong() {
+      if (queueIndex < queue.length) {
+        preloadAudio.src = '/audio/' + encodeSongUrl(queue[queueIndex]);
+      }
+    }
+
     // 点击选项作答
     function answerQuestion(i) {
       if (questionLocked) return;      // 本题已作答，忽略
@@ -1305,6 +1317,7 @@
       optionButtons.forEach(b => { b.disabled = true; });  // 禁用所有选项
 
       updateScore();
+      preloadNextSong();       // 趁 1.5 秒等待时间，提前拉取下一首歌
       // 1.5 秒后自动进入下一题
       answerTimer = setTimeout(() => {
         answerTimer = null;
@@ -1323,6 +1336,7 @@
     function endRound() {
       if (answerTimer) { clearTimeout(answerTimer); answerTimer = null; }
       songAudio.pause();
+      preloadAudio.removeAttribute('src');
       showResult();
     }
 
@@ -1392,6 +1406,7 @@
       songAudio.pause();
       songAudio.removeAttribute('src');
       songAudio.load();          // 清空当前歌曲
+      preloadAudio.removeAttribute('src');
       correct = 0; wrong = 0; answered = 0; total = 0;
       queue = []; queueIndex = 0;
       gameScope = 'mixed';

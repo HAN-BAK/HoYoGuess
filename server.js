@@ -33,7 +33,9 @@ function getB2Config() {
     endpoint: process.env.B2_ENDPOINT || c.b2Endpoint || 'https://api.backblazeb2.com',
     keyId: process.env.B2_KEY_ID || c.b2KeyId || '',
     applicationKey: process.env.B2_APPLICATION_KEY || c.b2ApplicationKey || '',
-    bucketName: process.env.B2_BUCKET_NAME || c.b2BucketName || ''
+    bucketName: process.env.B2_BUCKET_NAME || c.b2BucketName || '',
+    // 可选：音频 CDN 地址（例如 https://audio.mihoyo.cards），配置后音频改走 CDN
+    cdnBase: process.env.B2_CDN_BASE || c.cdnBase || ''
   };
 }
 
@@ -181,13 +183,18 @@ async function getDownloadToken(auth) {
   return downloadAuthCache.token;
 }
 
-// 生成某个文件的临时授权下载链接（浏览器拿到后可直接播放）
+// 生成某个文件的播放地址：
+// - 配置了 CDN 时，直接使用 CDN 地址（令牌由 CDN Worker 自己处理，浏览器 URL 里不含密钥）
+// - 未配置 CDN 时，退回生成 B2 临时授权下载链接
 async function getAuthorizedUrl(fileName) {
   const auth = await getB2Auth();
-  const token = await getDownloadToken(auth);
   const cfg = getB2Config();
-  return auth.downloadUrl + '/file/' + encodeURIComponent(cfg.bucketName) + '/' +
-    fileName.split('/').map(encodeURIComponent).join('/') +
+  const pathPart = fileName.split('/').map(encodeURIComponent).join('/');
+  if (cfg.cdnBase) {
+    return cfg.cdnBase + '/' + pathPart;
+  }
+  const token = await getDownloadToken(auth);
+  return auth.downloadUrl + '/file/' + encodeURIComponent(cfg.bucketName) + '/' + pathPart +
     '?Authorization=' + encodeURIComponent(token);
 }
 
