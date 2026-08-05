@@ -22,6 +22,7 @@
     :root {
       --gold: #FFD700;          /* 主色调：金色 */
       --cyan: #00D4FF;          /* 主色调：亮青色 */
+      --red: #FF7A9E;           /* 专辑模式按钮：淡红色 */
       --text: #ffffff;          /* 文字主色 */
       --text-secondary: rgba(255, 255, 255, 0.75);   /* 次级文字 */
       --text-faint: rgba(255, 255, 255, 0.6);        /* 更淡的文字 */
@@ -188,6 +189,15 @@
     .btn-cyan {
       border-color: rgba(0, 212, 255, 0.6);
       color: var(--cyan);
+    }
+    .btn-red {
+      border-color: rgba(255, 120, 150, 0.6);
+      color: var(--red);
+      box-shadow: 0 0 15px rgba(255, 120, 150, 0.25);
+    }
+    /* 浅色主题下用更深的红，保证对比度 */
+    body.theme-light .btn-red {
+      color: #B3355A;
     }
 
     /* ============ 主菜单 ============ */
@@ -590,6 +600,9 @@
     }
     .select-back {
       margin-top: 26px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
     }
 
     /* 浅色主题下答对/答错按钮改用深色文字，保证对比度 */
@@ -666,6 +679,7 @@
       <div class="mode-row">
         <button class="btn btn-gold" id="btnCustom">自选模式</button>
         <button class="btn btn-cyan" id="btnEndless">无尽模式</button>
+        <button class="btn btn-red" id="btnAlbum">专辑模式</button>
       </div>
 
     </div>
@@ -694,6 +708,7 @@
       </div>
 
       <div class="select-back">
+        <button class="btn hidden" id="btnSelectPrev">返回选择游戏</button>
         <button class="btn btn-cyan" id="btnSelectBack">返回主界面</button>
       </div>
     </div>
@@ -803,6 +818,7 @@
     const selectSub      = document.getElementById('selectSub');
     const selectList     = document.getElementById('selectList');
     const selectTip      = document.getElementById('selectTip');
+    const selectPrevBtn  = document.getElementById('btnSelectPrev');
     const countPanel     = document.getElementById('countPanel');
     const countInfo      = document.getElementById('countInfo');
     const countInput     = document.getElementById('countInput');
@@ -851,6 +867,7 @@
     let gameScope = 'mixed';    // 当前对局范围：'mixed' 混合模式，或游戏文件夹名
     let songPool = [];          // 当前对局的曲库（按所选游戏筛选后的歌曲）
     let pendingMode = 'custom'; // 选好模式后、还没选游戏前的暂存模式
+    let pendingAlbumGame = '';  // 专辑模式：当前选中的游戏名（用于第二步选专辑）
 
     // 背景音乐相关
     let bgmFile = null;         // 背景音乐文件名（取 BGMusic 里第一个）
@@ -920,7 +937,7 @@
       return Object.keys(map).sort().map(name => ({ name, count: map[name] }));
     }
 
-    // 显示“选择曲库”界面（m：'custom' 自选模式 / 'endless' 无尽模式）
+    // 显示“选择曲库”界面（m：'custom' 自选 / 'endless' 无尽 / 'album' 专辑）
     function showGameSelect(m) {
       if (songs.length < 4) {
         alert('小派蒙正在努力维护中哦');
@@ -929,33 +946,34 @@
       pendingMode = m;
 
       // 副标题显示当前模式信息
-      const modeText = m === 'custom'
-        ? '自选模式'
-        : '无尽模式';
+      const modeText = m === 'custom' ? '自选模式' : (m === 'album' ? '专辑模式' : '无尽模式');
       selectSub.textContent = '当前模式：' + modeText;
 
-      // 每次进入都回到“选择曲库”这一步（隐藏题目数填写）
+      // 每次进入都回到“选择曲库”这一步（隐藏题目数填写和返回按钮）
       countPanel.classList.add('hidden');
       selectList.classList.remove('hidden');
       selectTip.classList.remove('hidden');
+      selectPrevBtn.classList.add('hidden');
 
       // 清空列表
       selectList.innerHTML = '';
       const folders = getGameFolders();
 
-      // 混合模式排在列表第一个：从全部歌曲里随机出题
-      const mixedBtn = document.createElement('button');
-      mixedBtn.className = 'btn select-item mixed';
-      const mixedName = document.createElement('span');
-      mixedName.className = 'item-name';
-      mixedName.textContent = '混合模式';
-      const mixedCount = document.createElement('span');
-      mixedCount.className = 'item-count';
-      mixedCount.textContent = songs.length + ' 首';
-      mixedBtn.appendChild(mixedName);
-      mixedBtn.appendChild(mixedCount);
-      mixedBtn.addEventListener('click', () => chooseScope('mixed'));
-      selectList.appendChild(mixedBtn);
+      // 混合模式只出现在自选/无尽模式里（排在列表第一个）
+      if (m !== 'album') {
+        const mixedBtn = document.createElement('button');
+        mixedBtn.className = 'btn select-item mixed';
+        const mixedName = document.createElement('span');
+        mixedName.className = 'item-name';
+        mixedName.textContent = '混合模式';
+        const mixedCount = document.createElement('span');
+        mixedCount.className = 'item-count';
+        mixedCount.textContent = songs.length + ' 首';
+        mixedBtn.appendChild(mixedName);
+        mixedBtn.appendChild(mixedCount);
+        mixedBtn.addEventListener('click', () => chooseScope('mixed'));
+        selectList.appendChild(mixedBtn);
+      }
 
       // 混合模式后面再逐个添加游戏文件夹按钮
       folders.forEach(folder => {
@@ -969,16 +987,96 @@
         countSpan.textContent = folder.count + ' 首';
         btn.appendChild(nameSpan);
         btn.appendChild(countSpan);
-        btn.addEventListener('click', () => chooseScope(folder.name));
+        btn.addEventListener('click', () => {
+          if (m === 'album') {
+            showAlbumList(folder.name);   // 专辑模式：先选游戏，再选专辑
+          } else {
+            chooseScope(folder.name);
+          }
+        });
         selectList.appendChild(btn);
       });
 
-      // 没有按游戏分类的文件夹时给个提示
-      selectTip.textContent = folders.length === 0
-        ? '未发现按游戏分类的文件夹，可使用混合模式'
-        : '该游戏曲目不足 20 首时，错误答案会从全部歌库中抽取';
+      // 提示文字
+      if (m === 'album') {
+        selectTip.textContent = folders.length === 0
+          ? '未发现按游戏分类的文件夹'
+          : '先选择一个游戏，再选择其中的专辑';
+      } else {
+        selectTip.textContent = folders.length === 0
+          ? '未发现按游戏分类的文件夹，可使用混合模式'
+          : '该游戏曲目不足 20 首时，错误答案会从全部歌库中抽取';
+      }
 
       switchView('select');
+    }
+
+    // 专辑模式第二步：显示该游戏下的所有专辑（子文件夹）
+    function showAlbumList(gameName) {
+      pendingAlbumGame = gameName;
+      selectSub.textContent = '专辑模式 · ' + gameName + ' → 选择专辑';
+      selectList.innerHTML = '';
+
+      const prefix = gameName + '/';
+
+      // 第一个选项：整个游戏的全部曲目（含根目录和所有子文件夹）
+      const allSongs = songs.filter(s => s.indexOf(prefix) === 0);
+      const allBtn = document.createElement('button');
+      allBtn.className = 'btn select-item';
+      const allName = document.createElement('span');
+      allName.className = 'item-name';
+      allName.textContent = '全部曲目';
+      const allCount = document.createElement('span');
+      allCount.className = 'item-count';
+      allCount.textContent = allSongs.length + ' 首';
+      allBtn.appendChild(allName);
+      allBtn.appendChild(allCount);
+      allBtn.addEventListener('click', () => chooseAlbum(gameName));
+      selectList.appendChild(allBtn);
+
+      // 找出该游戏下所有“专辑”（子文件夹），按专辑名统计曲目数
+      const albumMap = {};
+      songs.forEach(s => {
+        if (s.indexOf(prefix) === 0) {
+          const rest = s.slice(prefix.length);
+          const slash = rest.indexOf('/');
+          if (slash > 0) {
+            const album = prefix + rest.slice(0, slash);
+            albumMap[album] = (albumMap[album] || 0) + 1;
+          }
+        }
+      });
+
+      // 逐个添加专辑按钮（只显示专辑名）
+      Object.keys(albumMap).sort().forEach(album => {
+        const btn = document.createElement('button');
+        btn.className = 'btn select-item';
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'item-name';
+        nameSpan.textContent = album.slice(prefix.length);
+        const countSpan = document.createElement('span');
+        countSpan.className = 'item-count';
+        countSpan.textContent = albumMap[album] + ' 首';
+        btn.appendChild(nameSpan);
+        btn.appendChild(countSpan);
+        btn.addEventListener('click', () => chooseAlbum(album));
+        selectList.appendChild(btn);
+      });
+
+      selectTip.textContent = '选择专辑后开始游戏（专辑曲目不足 20 首时，错误答案会从全部歌库抽取）';
+      selectPrevBtn.classList.remove('hidden');   // 显示“返回选择游戏”按钮
+    }
+
+    // 专辑模式第三步：选定专辑，开始游戏
+    function chooseAlbum(albumPath) {
+      // “全部曲目”时 albumPath 就是游戏名；具体专辑时是“游戏名/专辑名”
+      songPool = songs.filter(s => s.indexOf(albumPath + '/') === 0);
+      if (songPool.length === 0) {
+        alert('这个专辑还没有曲目哦');
+        return;
+      }
+      gameScope = albumPath;
+      startGame('album');
     }
 
     // 选好曲库后，进入下一步
@@ -1340,7 +1438,7 @@
       showResult();
     }
 
-    // 开始游戏（m：'custom' 或 'endless'，曲库范围在 chooseScope 里已设置好）
+    // 开始游戏（m：'custom' / 'endless' / 'album'，曲库范围已在前面设置好）
     function startGame(m) {
       if (songs.length < 4) {
         alert('小派蒙正在努力维护中哦');
@@ -1377,7 +1475,7 @@
     function showResult() {
       songAudio.pause();     // 停止当前歌曲
       document.getElementById('resultTitle').textContent =
-        mode === 'endless' ? '本轮统计' : '游戏结束';
+        mode === 'custom' ? '游戏结束' : '本轮统计';
       document.getElementById('statCorrect').textContent = correct;
       document.getElementById('statWrong').textContent = wrong;
 
@@ -1423,8 +1521,15 @@
     document.getElementById('btnEndless').addEventListener('click', () => {
       showGameSelect('endless');
     });
+    document.getElementById('btnAlbum').addEventListener('click', () => {
+      showGameSelect('album');
+    });
     // 选择曲库画面
     document.getElementById('btnSelectBack').addEventListener('click', backToMain);
+    // 专辑模式第二步的“返回选择游戏”按钮
+    selectPrevBtn.addEventListener('click', () => {
+      showGameSelect('album');
+    });
     document.getElementById('btnCountStart').addEventListener('click', startCountGame);
     document.getElementById('btnCountBack').addEventListener('click', backToSelectList);
     // 题目数输入框里按回车等于点“开始游戏”
