@@ -237,12 +237,12 @@
     .loading-fill {
       position: absolute;
       top: 0;
-      left: -40%;
+      left: 0;
       height: 100%;
-      width: 40%;
+      width: 0%;
       border-radius: 999px;
       background: linear-gradient(90deg, var(--cyan), var(--gold));   /* 青到金渐变，和播放器进度条一致 */
-      animation: loadingMove 1.4s ease-in-out infinite;
+      transition: width 0.5s ease;   /* 百分比增长时平滑过渡 */
     }
     @keyframes loadingMove {
       0%   { left: -40%; }
@@ -372,6 +372,12 @@
       width: 0%;
       border-radius: 3px;
       background: linear-gradient(90deg, var(--cyan), var(--gold));   /* 青到金渐变 */
+    }
+    /* 歌曲加载中：进度条变为百分比加载进度条（不显示数字） */
+    .progress-track.loading .progress-fill {
+      width: 15%;
+      left: 0;
+      transition: width 0.5s ease;
     }
     .time-text {
       margin-top: 8px;
@@ -630,6 +636,148 @@
     #bgmBtn   { right: 74px; }   /* 背景音乐开关：靠左一点 */
     #themeBtn { right: 18px; }   /* 主题切换：最右边 */
 
+    /* 选择玩法（单人/双人）面板 */
+    .player-panel {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 18px;
+      border-radius: 14px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+    }
+    .player-info {
+      color: var(--cyan);
+      font-size: 15px;
+      margin-bottom: 16px;
+    }
+    .player-btns {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* 双人模式布局：左 P1 圆形按钮 / 中题目（歌名胶囊）/ 右 P2 圆形按钮 */
+    .duo-layout {
+      display: grid;
+      grid-template-columns: 84px 1fr 84px;
+      gap: 10px 12px;
+      align-items: center;
+    }
+    .duo-side-title {
+      text-align: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--cyan);
+      letter-spacing: 2px;
+    }
+    .duo-msg {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    /* 圆形字母按钮（P1：Q/W/E/R，P2：U/I/O/P；触摸设备显示 A/B/C/D） */
+    .duo-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      font-weight: 700;
+      background: var(--btn-bg);
+      border: 2px solid rgba(0, 212, 255, 0.55);
+      color: var(--cyan);
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(0, 212, 255, 0.25);
+      transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease;
+      user-select: none;
+      justify-self: center;
+    }
+    .duo-circle:hover { box-shadow: 0 0 20px rgba(0, 212, 255, 0.5); }
+    .duo-circle:active { transform: scale(0.9); }
+    .duo-circle:disabled { opacity: 0.55; cursor: default; }
+    /* 圆形按钮的答对/答错亮光特效 */
+    .duo-circle.correct {
+      background: rgba(0, 230, 118, 0.8);
+      border-color: #00E676;
+      color: #ffffff;
+      box-shadow: 0 0 22px rgba(0, 230, 118, 0.8);
+    }
+    .duo-circle.wrong {
+      background: rgba(255, 23, 68, 0.8);
+      border-color: #FF1744;
+      color: #ffffff;
+      box-shadow: 0 0 22px rgba(255, 23, 68, 0.8);
+    }
+    body.theme-light .duo-circle.correct { color: #064A22; }
+    body.theme-light .duo-circle.wrong { color: #7A1020; }
+
+    /* 中间题目：圆角胶囊，只展示歌名，无字母、无任何互动效果 */
+    .duo-question {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 52px;
+      padding: 6px 14px;
+      font-size: 14px;
+      border-radius: 999px;   /* 圆角胶囊 */
+      background: var(--btn-bg);
+      border: 1px solid var(--btn-border);
+      box-sizing: border-box;
+      pointer-events: none;   /* 关闭所有互动 */
+      user-select: none;
+    }
+    /* 中间胶囊的答对/答错变色（仅展示，不可点击） */
+    .duo-question.correct {
+      background: var(--correct-bg);
+      border-color: #00E676;
+      color: #ffffff;
+      box-shadow: 0 0 18px rgba(0, 230, 118, 0.45);
+    }
+    .duo-question.wrong {
+      background: var(--wrong-bg);
+      border-color: #FF1744;
+      color: #ffffff;
+      box-shadow: 0 0 18px rgba(255, 23, 68, 0.45);
+    }
+    body.theme-light .duo-question.correct { color: #064A22; }
+    body.theme-light .duo-question.wrong { color: #7A1020; }
+
+    /* 双人结算：胜利特效 */
+    .winner-text {
+      font-size: 30px;
+      text-align: center;
+      color: var(--gold);
+      margin: 14px 0 8px;
+      opacity: 0;
+      transform: scale(0.6);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .winner-text.show {
+      opacity: 1;
+      transform: scale(1);
+      animation: winnerGlow 0.9s ease-in-out infinite alternate;
+    }
+    @keyframes winnerGlow {
+      from { text-shadow: 0 0 8px rgba(255, 215, 0, 0.6); }
+      to   { text-shadow: 0 0 24px rgba(255, 215, 0, 1); }
+    }
+    .confetti {
+      position: fixed;
+      top: -14px;
+      z-index: 99;
+      width: 8px;
+      height: 14px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+      pointer-events: none;
+    }
+    @keyframes confettiFall {
+      to { transform: translateY(110vh) rotate(720deg); }
+    }
+
     /* 小屏幕适配 */
     @media (max-width: 520px) {
       .view { padding: 24px 12px 100px; }
@@ -673,13 +821,12 @@
 
       <!-- 主页面加载进度条（内容加载完自动隐藏） -->
       <div class="loading-bar" id="loadingBar">
-        <div class="loading-fill"></div>
+        <div class="loading-fill" id="loadingFill"></div>
       </div>
 
       <div class="mode-row">
         <button class="btn btn-gold" id="btnCustom">自选模式</button>
         <button class="btn btn-cyan" id="btnEndless">无尽模式</button>
-        <button class="btn btn-red" id="btnAlbum">专辑模式</button>
       </div>
 
     </div>
@@ -704,6 +851,15 @@
         <div class="count-btns">
           <button class="btn btn-gold" id="btnCountStart">开始游戏</button>
           <button class="btn" id="btnCountBack">重新选择</button>
+        </div>
+      </div>
+
+      <!-- 第三步：选择单人 / 双人 -->
+      <div class="player-panel hidden" id="playerPanel">
+        <p class="player-info" id="playerInfo"></p>
+        <div class="player-btns">
+          <button class="btn btn-gold" id="btnSingle">单人模式</button>
+          <button class="btn btn-cyan" id="btnDouble">双人模式</button>
         </div>
       </div>
 
@@ -782,6 +938,30 @@
       </button>
     </div>
 
+    <!-- 双人模式：左 P1 圆形按钮 / 中题目（歌名胶囊）/ 右 P2 圆形按钮（默认隐藏）
+         用网格布局，让左右圆形按钮和中间胶囊逐行对齐 -->
+    <div class="duo-layout hidden" id="duoGame">
+      <div class="duo-side-title">P1</div>
+      <div class="duo-msg" id="duoMsg">听歌抢答！</div>
+      <div class="duo-side-title">P2</div>
+
+      <button class="duo-circle" data-player="1" data-index="0">Q</button>
+      <div class="duo-question"><span class="opt-name"></span></div>
+      <button class="duo-circle" data-player="2" data-index="0">U</button>
+
+      <button class="duo-circle" data-player="1" data-index="1">W</button>
+      <div class="duo-question"><span class="opt-name"></span></div>
+      <button class="duo-circle" data-player="2" data-index="1">I</button>
+
+      <button class="duo-circle" data-player="1" data-index="2">E</button>
+      <div class="duo-question"><span class="opt-name"></span></div>
+      <button class="duo-circle" data-player="2" data-index="2">O</button>
+
+      <button class="duo-circle" data-player="1" data-index="3">R</button>
+      <div class="duo-question"><span class="opt-name"></span></div>
+      <button class="duo-circle" data-player="2" data-index="3">P</button>
+    </div>
+
     <!-- 底部固定栏 -->
     <div class="bottom-bar">
       <button class="btn btn-cyan" id="btnBack">返回主界面</button>
@@ -792,10 +972,11 @@
   <section id="resultView" class="view hidden">
     <div class="result-box glass">
       <h2 id="resultTitle">游戏结束</h2>
+      <h3 class="winner-text" id="winnerText"></h3>
       <div class="stats">
-        <div class="stat"><span>答对题数</span><b id="statCorrect">0</b></div>
-        <div class="stat"><span>答错题数</span><b id="statWrong">0</b></div>
-        <div class="stat"><span>正确率</span><b id="statAccuracy">—</b></div>
+        <div class="stat"><span id="statLabel1">答对题数</span><b id="statCorrect">0</b></div>
+        <div class="stat"><span id="statLabel2">答错题数</span><b id="statWrong">0</b></div>
+        <div class="stat"><span id="statLabel3">正确率</span><b id="statAccuracy">—</b></div>
       </div>
       <p class="result-extra" id="resultExtra">（共出题 0 道，跳过 0 道）</p>
       <div class="result-btns">
@@ -825,8 +1006,18 @@
     const countMax       = document.getElementById('countMax');
     const scoreText     = document.getElementById('scoreText');
     const optionButtons = document.querySelectorAll('.option');
+    const optionsBox    = document.getElementById('options');
     const timeText      = document.getElementById('timeText');
     const loadingBar    = document.getElementById('loadingBar');
+    const playerPanel   = document.getElementById('playerPanel');
+    const playerInfo    = document.getElementById('playerInfo');
+    const duoGame       = document.getElementById('duoGame');
+    const duoMsg        = document.getElementById('duoMsg');
+    const p1OptionButtons = document.querySelectorAll('.duo-circle[data-player="1"]');
+    const p2OptionButtons = document.querySelectorAll('.duo-circle[data-player="2"]');
+    const duoOptionButtons = document.querySelectorAll('.duo-circle');
+    const duoQuestionButtons = document.querySelectorAll('.duo-question');
+    const winnerTextEl  = document.getElementById('winnerText');
 
     // 音频元素
     const bgmAudio  = document.getElementById('bgmAudio');   // 背景音乐
@@ -868,6 +1059,16 @@
     let songPool = [];          // 当前对局的曲库（按所选游戏筛选后的歌曲）
     let pendingMode = 'custom'; // 选好模式后、还没选游戏前的暂存模式
     let pendingAlbumGame = '';  // 专辑模式：当前选中的游戏名（用于第二步选专辑）
+
+    // 双人模式状态
+    let twoPlayer = false;      // 当前对局是否为双人模式
+    let p1Score = 0;            // P1 得分
+    let p2Score = 0;            // P2 得分
+    let p1Answered = false;     // 本题 P1 是否已作答
+    let p2Answered = false;     // 本题 P2 是否已作答
+    let p1AnswerIndex = -1;     // P1 本题所选选项
+    let p2AnswerIndex = -1;     // P2 本题所选选项
+    let duoRoundDone = false;   // 本题是否已结束（有人答对或双方答错）
 
     // 背景音乐相关
     let bgmFile = null;         // 背景音乐文件名（取 BGMusic 里第一个）
@@ -937,7 +1138,7 @@
       return Object.keys(map).sort().map(name => ({ name, count: map[name] }));
     }
 
-    // 显示“选择曲库”界面（m：'custom' 自选 / 'endless' 无尽 / 'album' 专辑）
+    // 显示“选择曲库”界面（m：'custom' 自选 / 'endless' 无尽）
     function showGameSelect(m) {
       if (songs.length < 4) {
         alert('小派蒙正在努力维护中哦');
@@ -946,11 +1147,12 @@
       pendingMode = m;
 
       // 副标题显示当前模式信息
-      const modeText = m === 'custom' ? '自选模式' : (m === 'album' ? '专辑模式' : '无尽模式');
+      const modeText = m === 'custom' ? '自选模式' : '无尽模式';
       selectSub.textContent = '当前模式：' + modeText;
 
       // 每次进入都回到“选择曲库”这一步（隐藏题目数填写和返回按钮）
       countPanel.classList.add('hidden');
+      playerPanel.classList.add('hidden');
       selectList.classList.remove('hidden');
       selectTip.classList.remove('hidden');
       selectPrevBtn.classList.add('hidden');
@@ -959,23 +1161,21 @@
       selectList.innerHTML = '';
       const folders = getGameFolders();
 
-      // 混合模式只出现在自选/无尽模式里（排在列表第一个）
-      if (m !== 'album') {
-        const mixedBtn = document.createElement('button');
-        mixedBtn.className = 'btn select-item mixed';
-        const mixedName = document.createElement('span');
-        mixedName.className = 'item-name';
-        mixedName.textContent = '混合模式';
-        const mixedCount = document.createElement('span');
-        mixedCount.className = 'item-count';
-        mixedCount.textContent = songs.length + ' 首';
-        mixedBtn.appendChild(mixedName);
-        mixedBtn.appendChild(mixedCount);
-        mixedBtn.addEventListener('click', () => chooseScope('mixed'));
-        selectList.appendChild(mixedBtn);
-      }
+      // 混合模式排在列表第一个
+      const mixedBtn = document.createElement('button');
+      mixedBtn.className = 'btn select-item mixed';
+      const mixedName = document.createElement('span');
+      mixedName.className = 'item-name';
+      mixedName.textContent = '混合模式';
+      const mixedCount = document.createElement('span');
+      mixedCount.className = 'item-count';
+      mixedCount.textContent = songs.length + ' 首';
+      mixedBtn.appendChild(mixedName);
+      mixedBtn.appendChild(mixedCount);
+      mixedBtn.addEventListener('click', () => chooseScope('mixed'));
+      selectList.appendChild(mixedBtn);
 
-      // 混合模式后面再逐个添加游戏文件夹按钮
+      // 混合模式后面再逐个添加游戏文件夹按钮（点进去可选专辑）
       folders.forEach(folder => {
         const btn = document.createElement('button');
         btn.className = 'btn select-item';
@@ -987,34 +1187,22 @@
         countSpan.textContent = folder.count + ' 首';
         btn.appendChild(nameSpan);
         btn.appendChild(countSpan);
-        btn.addEventListener('click', () => {
-          if (m === 'album') {
-            showAlbumList(folder.name);   // 专辑模式：先选游戏，再选专辑
-          } else {
-            chooseScope(folder.name);
-          }
-        });
+        btn.addEventListener('click', () => showAlbumList(folder.name));
         selectList.appendChild(btn);
       });
 
       // 提示文字
-      if (m === 'album') {
-        selectTip.textContent = folders.length === 0
-          ? '未发现按游戏分类的文件夹'
-          : '先选择一个游戏，再选择其中的专辑';
-      } else {
-        selectTip.textContent = folders.length === 0
-          ? '未发现按游戏分类的文件夹，可使用混合模式'
-          : '该游戏曲目不足 20 首时，错误答案会从全部歌库中抽取';
-      }
+      selectTip.textContent = folders.length === 0
+        ? '未发现按游戏分类的文件夹，可使用混合模式'
+        : '点进游戏可以选择“全部曲目”或指定专辑';
 
       switchView('select');
     }
 
-    // 专辑模式第二步：显示该游戏下的所有专辑（子文件夹）
+    // 显示该游戏下的所有专辑（子文件夹）
     function showAlbumList(gameName) {
       pendingAlbumGame = gameName;
-      selectSub.textContent = '专辑模式 · ' + gameName + ' → 选择专辑';
+      selectSub.textContent = gameName + ' → 选择专辑';
       selectList.innerHTML = '';
 
       const prefix = gameName + '/';
@@ -1067,7 +1255,7 @@
       selectPrevBtn.classList.remove('hidden');   // 显示“返回选择游戏”按钮
     }
 
-    // 专辑模式第三步：选定专辑，开始游戏
+    // 选定专辑后，进入“单人/双人”选择
     function chooseAlbum(albumPath) {
       // “全部曲目”时 albumPath 就是游戏名；具体专辑时是“游戏名/专辑名”
       songPool = songs.filter(s => s.indexOf(albumPath + '/') === 0);
@@ -1076,10 +1264,10 @@
         return;
       }
       gameScope = albumPath;
-      startGame('album');
+      showPlayerStep();                  // 专辑选完后，同样先选单人/双人
     }
 
-    // 选好曲库后，进入下一步
+    // 选好曲库后，显示“单人模式 / 双人模式”选择
     function chooseScope(scope) {
       if (scope === 'mixed') {
         gameScope = 'mixed';
@@ -1093,10 +1281,31 @@
           return;
         }
       }
+      showPlayerStep();
+    }
+
+    // 显示“单人/双人”选择面板
+    function showPlayerStep() {
+      selectList.classList.add('hidden');
+      selectTip.classList.add('hidden');
+      countPanel.classList.add('hidden');
+      playerPanel.classList.remove('hidden');
+      selectPrevBtn.classList.remove('hidden');
+      selectSub.textContent = '选择玩法';
+      const scopeName = gameScope === 'mixed' ? '混合模式' : gameScope;
+      playerInfo.textContent = '已选择：' + scopeName + '（共 ' + songPool.length + ' 首）';
+    }
+
+    // 确定单人/双人后继续流程
+    function continueAfterPlayerChoice() {
+      playerPanel.classList.add('hidden');
+      selectPrevBtn.classList.add('hidden');
       if (pendingMode === 'custom') {
         showCountStep();                 // 自选模式：先填写题目数
+      } else if (twoPlayer) {
+        startGame2P('endless');          // 无尽模式双人
       } else {
-        startGame('endless');            // 无尽模式：直接开始
+        startGame('endless');            // 无尽模式单人
       }
     }
 
@@ -1123,7 +1332,7 @@
         n = songPool.length;
       }
       customTotal = n;
-      startGame('custom');
+      if (twoPlayer) { startGame2P('custom'); } else { startGame('custom'); }
     }
 
     // 返回“选择曲库”这一步
@@ -1270,8 +1479,43 @@
       iconPlay.classList.remove('hidden');
     });
 
+    // 歌曲加载状态：加载中时进度条显示百分比进度，加载完成后恢复普通进度条
+    let songLoading = false;
+    function setSongLoading(loading) {
+      songLoading = loading;
+      progressTrack.classList.toggle('loading', loading);
+      if (loading) {
+        progressFill.style.width = '15%';   // 开始加载的初始百分比
+        timeText.textContent = '00:00 / 00:00';
+      }
+    }
+    songAudio.addEventListener('loadstart', () => setSongLoading(true));
+    songAudio.addEventListener('loadedmetadata', () => {
+      // 元数据就绪：推进到 60%，并显示总时长
+      if (songLoading) {
+        progressFill.style.width = '60%';
+        const d = songAudio.duration || 0;
+        timeText.textContent = '00:00 / ' + fmtTime(d);
+      }
+    });
+    songAudio.addEventListener('progress', () => {
+      // 尽量用真实缓冲进度（已知总时长时），最多推进到 95%
+      if (!songLoading) return;
+      try {
+        const d = songAudio.duration || 0;
+        if (d > 0 && songAudio.buffered.length > 0) {
+          const end = songAudio.buffered.end(songAudio.buffered.length - 1);
+          const pct = Math.min(95, (end / d) * 100);
+          if (pct > 0) progressFill.style.width = pct + '%';
+        }
+      } catch (e) {}
+    });
+    songAudio.addEventListener('canplay', () => setSongLoading(false));
+    songAudio.addEventListener('error', () => setSongLoading(false));
+
     // 进度条随时间更新
     songAudio.addEventListener('timeupdate', () => {
+      if (songLoading) return;   // 加载中不更新普通进度
       const d = songAudio.duration || 0;
       const pct = d > 0 ? (songAudio.currentTime / d) * 100 : 0;
       progressFill.style.width = pct + '%';
@@ -1380,6 +1624,7 @@
       });
 
       // 载入这首歌并尝试自动播放
+      setSongLoading(true);
       songAudio.src = '/audio/' + encodeSongUrl(currentSong);
       songAudio.volume = parseFloat(volumeSlider.value);
       songAudio.play().catch(() => {});
@@ -1425,6 +1670,13 @@
 
     // 跳过本题：total 在出题时已 +1，这里不再加；answered 不变
     function skipQuestion() {
+      if (twoPlayer) {
+        // 双人模式：跳过 = 本题作废，直接下一题
+        if (duoRoundDone) return;
+        duoRoundDone = true;
+        loadQuestion2P();
+        return;
+      }
       if (questionLocked) return;
       questionLocked = true;
       loadQuestion();
@@ -1435,10 +1687,10 @@
       if (answerTimer) { clearTimeout(answerTimer); answerTimer = null; }
       songAudio.pause();
       preloadAudio.removeAttribute('src');
-      showResult();
+      if (twoPlayer) { showResult2P(); } else { showResult(); }
     }
 
-    // 开始游戏（m：'custom' / 'endless' / 'album'，曲库范围已在前面设置好）
+    // 开始游戏（m：'custom' / 'endless'，曲库范围已在前面设置好）
     function startGame(m) {
       if (songs.length < 4) {
         alert('小派蒙正在努力维护中哦');
@@ -1467,13 +1719,225 @@
         queue = shuffle(songPool);
       }
 
+      // 单人模式：显示单人选项，隐藏双人布局
+      optionsBox.classList.remove('hidden');
+      duoGame.classList.add('hidden');
       switchView('game');   // 进入游戏画面（背景音乐自动暂停）
       loadQuestion();
+    }
+
+    // 开始双人游戏（m：'custom' / 'endless'）
+    function startGame2P(m) {
+      if (songs.length < 4) {
+        alert('小派蒙正在努力维护中哦');
+        return;
+      }
+      if (songPool.length === 0) {
+        alert('曲库还没有曲目哦');
+        return;
+      }
+      if (answerTimer) { clearTimeout(answerTimer); answerTimer = null; }
+
+      twoPlayer = true;
+      mode = m;
+      correct = 0; wrong = 0; answered = 0; total = 0;
+      p1Score = 0; p2Score = 0;
+      queueIndex = 0;
+
+      if (m === 'custom') {
+        // 自选模式：打乱当前曲库后按顺序取，不够就循环从头再取
+        const shuffled = shuffle(songPool);
+        queue = [];
+        while (queue.length < customTotal) {
+          queue.push(...shuffled);
+        }
+        queue = queue.slice(0, customTotal);
+      } else {
+        // 无尽/专辑：打乱当前曲库，取完再打乱
+        queue = shuffle(songPool);
+      }
+
+      // 显示双人布局，隐藏单人选项
+      optionsBox.classList.add('hidden');
+      duoGame.classList.remove('hidden');
+      switchView('game');
+      loadQuestion2P();
+    }
+
+    // 双人模式出题
+    function loadQuestion2P() {
+      // 自选模式：出题数达到设定值就自动结算
+      if (mode === 'custom' && total >= customTotal) {
+        showResult2P();
+        return;
+      }
+
+      if (queueIndex >= queue.length) {
+        queue = shuffle(songPool);
+        queueIndex = 0;
+      }
+      currentSong = queue[queueIndex++];
+      total++;
+
+      // 干扰项来源（和单人规则一致）
+      let distractorPool;
+      if (gameScope === 'mixed' || songPool.length < 20) {
+        distractorPool = songs;
+      } else {
+        distractorPool = songPool;
+      }
+      const others = shuffle(distractorPool.filter(s => s !== currentSong));
+      optionNames = shuffle([currentSong].concat(others.slice(0, 3)));
+      correctAnswer = currentSong;
+
+      // 重置本题状态
+      duoRoundDone = false;
+      p1Answered = false; p2Answered = false;
+      p1AnswerIndex = -1; p2AnswerIndex = -1;
+
+      // 渲染选项：PC 显示 Q/W/E/R 和 U/I/O/P，触摸设备显示 A/B/C/D
+      const isTouch = window.matchMedia('(pointer: coarse)').matches;
+      const letters1 = isTouch ? ['A', 'B', 'C', 'D'] : ['Q', 'W', 'E', 'R'];
+      const letters2 = isTouch ? ['A', 'B', 'C', 'D'] : ['U', 'I', 'O', 'P'];
+
+      duoOptionButtons.forEach(btn => {
+        btn.classList.remove('correct', 'wrong');
+        btn.disabled = false;
+      });
+      duoQuestionButtons.forEach(p => {
+        p.classList.remove('correct', 'wrong');
+      });
+      // 圆形按钮只显示字母；中间胶囊统一显示歌名（无字母、无互动）
+      p1OptionButtons.forEach((btn, i) => {
+        btn.textContent = letters1[i];
+      });
+      p2OptionButtons.forEach((btn, i) => {
+        btn.textContent = letters2[i];
+      });
+      duoQuestionButtons.forEach((p, i) => {
+        p.querySelector('.opt-name').textContent = displayName(optionNames[i]);
+      });
+
+      scoreText.textContent = 'P1 ' + p1Score + ' : ' + p2Score + ' P2';
+      duoMsg.textContent = '听歌抢答！';
+
+      // 载入并尝试自动播放
+      setSongLoading(true);
+      songAudio.src = '/audio/' + encodeSongUrl(currentSong);
+      songAudio.volume = parseFloat(volumeSlider.value);
+      songAudio.play().catch(() => {});
+    }
+
+    // 双人模式作答（player：1 或 2，index：选项序号）
+    function answer2P(player, index) {
+      if (duoRoundDone) return;                   // 本题已结束
+      if (player === 1 && p1Answered) return;     // P1 已作答
+      if (player === 2 && p2Answered) return;     // P2 已作答
+
+      const chosen = optionNames[index];
+      const ok = (chosen === correctAnswer);
+
+      if (player === 1) {
+        p1Answered = true;
+        p1AnswerIndex = index;
+      } else {
+        p2Answered = true;
+        p2AnswerIndex = index;
+      }
+
+      const btns = player === 1 ? p1OptionButtons : p2OptionButtons;
+      if (ok) {
+        // 第一个答对者得分
+        btns[index].classList.add('correct');
+        duoQuestionButtons[index].classList.add('correct');
+        if (player === 1) { p1Score++; } else { p2Score++; }
+        duoRoundDone = true;
+        duoMsg.textContent = (player === 1 ? 'P1' : 'P2') + ' 抢答成功！';
+      } else {
+        btns[index].classList.add('wrong');
+        duoQuestionButtons[index].classList.add('wrong');
+        duoMsg.textContent = (player === 1 ? 'P1' : 'P2') + ' 答错了';
+        // 双方都答错：本题作废
+        if (p1Answered && p2Answered) {
+          duoRoundDone = true;
+          duoMsg.textContent = '双方都答错，本题作废';
+        }
+      }
+
+      // 锁定该玩家已点过的按钮（防止误点其他选项）
+      btns.forEach(b => { b.disabled = true; });
+
+      if (duoRoundDone) {
+        // 高亮正确答案（双方都展示），约 1 秒后进入下一题
+        const correctIdx = optionNames.indexOf(correctAnswer);
+        p1OptionButtons.forEach((b, i) => {
+          b.disabled = true;
+          if (i === correctIdx) b.classList.add('correct');
+        });
+        p2OptionButtons.forEach((b, i) => {
+          b.disabled = true;
+          if (i === correctIdx) b.classList.add('correct');
+        });
+        duoQuestionButtons.forEach((p, i) => {
+          if (i === correctIdx) p.classList.add('correct');
+        });
+        scoreText.textContent = 'P1 ' + p1Score + ' : ' + p2Score + ' P2';
+        answerTimer = setTimeout(() => {
+          answerTimer = null;
+          loadQuestion2P();
+        }, 1000);
+      }
+    }
+
+    // 双人模式结算：展示两人得分对比 + 胜利特效
+    function showResult2P() {
+      songAudio.pause();
+      document.getElementById('resultTitle').textContent = '双人对战 · 结算';
+      document.getElementById('statLabel1').textContent = 'P1 得分';
+      document.getElementById('statLabel2').textContent = 'P2 得分';
+      document.getElementById('statLabel3').textContent = '结果';
+      document.getElementById('statCorrect').textContent = p1Score;
+      document.getElementById('statWrong').textContent = p2Score;
+      document.getElementById('statAccuracy').textContent = '——';
+      document.getElementById('resultExtra').textContent =
+        '（共出题 ' + total + ' 道）';
+
+      // 胜负判定
+      let winnerText = '平局';
+      if (p1Score > p2Score) winnerText = 'P1 胜利 🏆';
+      else if (p2Score > p1Score) winnerText = 'P2 胜利 🏆';
+      winnerTextEl.textContent = winnerText;
+      winnerTextEl.classList.add('show');
+      launchConfetti();
+
+      switchView('result');
+    }
+
+    // 胜利时撒彩纸特效
+    function launchConfetti() {
+      const colors = ['#FFD700', '#00D4FF', '#FF7A9E', '#00E676', '#FF5252'];
+      for (let i = 0; i < 36; i++) {
+        const c = document.createElement('div');
+        c.className = 'confetti';
+        c.style.left = Math.random() * 100 + '%';
+        c.style.background = colors[Math.floor(Math.random() * colors.length)];
+        c.style.animationDuration = (Math.random() * 1.5 + 1.2) + 's';
+        c.style.animationDelay = (Math.random() * 0.6) + 's';
+        document.body.appendChild(c);
+        setTimeout(() => c.remove(), 3500);
+      }
     }
 
     // ---------- 9. 结算画面 ----------
     function showResult() {
       songAudio.pause();     // 停止当前歌曲
+      document.getElementById('statLabel1').textContent = '答对题数';
+      document.getElementById('statLabel2').textContent = '答错题数';
+      document.getElementById('statLabel3').textContent = '正确率';
+      // 单机模式同样展示胜利特效
+      winnerTextEl.textContent = '挑战完成 🎉';
+      winnerTextEl.classList.add('show');
+      launchConfetti();
       document.getElementById('resultTitle').textContent =
         mode === 'custom' ? '游戏结束' : '本轮统计';
       document.getElementById('statCorrect').textContent = correct;
@@ -1495,7 +1959,7 @@
 
     // 再来一局：重置所有变量，沿用当前模式和题数
     function restartGame() {
-      startGame(mode);
+      if (twoPlayer) { startGame2P(mode); } else { startGame(mode); }
     }
 
     // 返回主界面：停止播放、重置进度、恢复背景音乐
@@ -1509,6 +1973,16 @@
       queue = []; queueIndex = 0;
       gameScope = 'mixed';
       songPool = [];
+      // 双人模式复位
+      twoPlayer = false;
+      p1Score = 0; p2Score = 0;
+      duoGame.classList.add('hidden');
+      optionsBox.classList.remove('hidden');
+      document.getElementById('statLabel1').textContent = '答对题数';
+      document.getElementById('statLabel2').textContent = '答错题数';
+      document.getElementById('statLabel3').textContent = '正确率';
+      winnerTextEl.textContent = '';
+      winnerTextEl.classList.remove('show');
       switchView('main');
       loadSongs();               // 顺便刷新歌库数量
     }
@@ -1521,17 +1995,23 @@
     document.getElementById('btnEndless').addEventListener('click', () => {
       showGameSelect('endless');
     });
-    document.getElementById('btnAlbum').addEventListener('click', () => {
-      showGameSelect('album');
-    });
     // 选择曲库画面
     document.getElementById('btnSelectBack').addEventListener('click', backToMain);
-    // 专辑模式第二步的“返回选择游戏”按钮
+    // “返回选择游戏”按钮（专辑第二步和单人/双人选择共用）
     selectPrevBtn.addEventListener('click', () => {
-      showGameSelect('album');
+      showGameSelect(pendingMode);
     });
     document.getElementById('btnCountStart').addEventListener('click', startCountGame);
     document.getElementById('btnCountBack').addEventListener('click', backToSelectList);
+    // 单人/双人选择
+    document.getElementById('btnSingle').addEventListener('click', () => {
+      twoPlayer = false;
+      continueAfterPlayerChoice();
+    });
+    document.getElementById('btnDouble').addEventListener('click', () => {
+      twoPlayer = true;
+      continueAfterPlayerChoice();
+    });
     // 题目数输入框里按回车等于点“开始游戏”
     countInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -1551,14 +2031,38 @@
       });
     });
 
+    // 双人选项：P1 点左侧，P2 点右侧
+    duoOptionButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        answer2P(
+          parseInt(btn.dataset.player, 10),
+          parseInt(btn.dataset.index, 10)
+        );
+      });
+    });
+
     // 键盘控制：PC 端按 A / B / C / D 键选择对应选项
     document.addEventListener('keydown', (e) => {
       if (currentView !== 'game') return;                 // 只在游戏画面生效
       // 在输入框里打字时不触发（例如设置题目数时按 A）
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;     // 组合键不触发
+      const key = e.key.toLowerCase();
+      if (twoPlayer) {
+        // 双人模式：P1 用 Q/W/E/R，P2 用 U/I/O/P（移动端接键盘也走这里）
+        const p1Map = { q: 0, w: 1, e: 2, r: 3 };
+        const p2Map = { u: 0, i: 1, o: 2, p: 3 };
+        if (p1Map[key] !== undefined) {
+          e.preventDefault();
+          answer2P(1, p1Map[key]);
+        } else if (p2Map[key] !== undefined) {
+          e.preventDefault();
+          answer2P(2, p2Map[key]);
+        }
+        return;
+      }
       const keyMap = { a: 0, b: 1, c: 2, d: 3 };
-      const idx = keyMap[e.key.toLowerCase()];
+      const idx = keyMap[key];
       if (idx !== undefined) {
         e.preventDefault();
         answerQuestion(idx);
@@ -1588,9 +2092,19 @@
 
     createStars();    // 生成星空
 
-    // 歌库和背景音乐都加载完成后，隐藏主页面加载进度条
-    Promise.all([loadSongs(), setupBGM()]).then(() => {
-      loadingBar.classList.add('hidden');
+    // 主页面加载进度条：按“歌库、背景音乐”两个步骤推进百分比（不显示数字）
+    const loadingFill = document.getElementById('loadingFill');
+    let loadedSteps = 0;
+    function advanceLoading() {
+      loadedSteps++;
+      loadingFill.style.width = (loadedSteps === 1 ? '55%' : '100%');
+    }
+    Promise.all([
+      loadSongs().then(advanceLoading),
+      setupBGM().then(advanceLoading)
+    ]).then(() => {
+      // 等进度条走满的过渡动画结束再隐藏
+      setTimeout(() => loadingBar.classList.add('hidden'), 600);
     });
   </script>
 </body>
