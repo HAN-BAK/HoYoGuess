@@ -1054,6 +1054,46 @@
       preloadAudios.push(pa);
     }
 
+    // ---------- iOS 专用预加载 ----------
+    // iOS/iPadOS 的 Safari 不允许音频元素在后台预下载（preload 属性无效），
+    // 所以 iOS 上改用 fetch 把歌下载到内存（Blob）缓存，切题时直接用内存数据，同样秒开
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);  // iPadOS 13+ 伪装成 Mac
+    const blobCache = new Map();        // 歌名 -> 内存里的 Blob 地址
+    const blobFetching = new Set();     // 正在下载的歌名（防止重复下载）
+
+    // 用 fetch 预下载一首歌（仅 iOS 使用），成功后放入内存缓存
+    function fetchAndCache(song) {
+      if (blobCache.has(song) || blobFetching.has(song)) return;
+      blobFetching.add(song);
+      fetch('/audio/' + encodeSongUrl(song))
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); })
+        .then(blob => {
+          const url = URL.createObjectURL(blob);
+          blobCache.set(song, url);
+          // 内存有限，缓存超过 6 首时释放最旧的一首
+          if (blobCache.size > 6) {
+            const oldest = blobCache.keys().next().value;
+            URL.revokeObjectURL(blobCache.get(oldest));
+            blobCache.delete(oldest);
+          }
+        })
+        .catch(() => {})   // 下载失败就跳过，不影响正常播放
+        .finally(() => { blobFetching.delete(song); });
+    }
+
+    // 返回歌曲的播放地址：iOS 有内存缓存就用内存的，否则走正常地址
+    function songSrc(song) {
+      return blobCache.get(song) || '/audio/' + encodeSongUrl(song);
+    }
+
+    // 清空 iOS 内存缓存（结束本轮/回主页时调用，释放内存）
+    function clearBlobCache() {
+      blobCache.forEach(u => URL.revokeObjectURL(u));
+      blobCache.clear();
+      blobFetching.clear();
+    }
+
     // 播放器控件
     const playBtn       = document.getElementById('playBtn');
     const iconPlay      = document.getElementById('iconPlay');
@@ -1652,7 +1692,7 @@
 
       // 载入这首歌并尝试自动播放
       setSongLoading(true);
-      songAudio.src = '/audio/' + encodeSongUrl(currentSong);
+      songAudio.src = songSrc(currentSong);
       songAudio.volume = parseFloat(volumeSlider.value);
       songAudio.play().catch(() => {});
 
@@ -1666,8 +1706,13 @@
       for (let pi = 0; pi < 4; pi++) {
         const idx = queueIndex + pi;
         if (idx < queue.length) {
-          preloadAudios[pi].src = '/audio/' + encodeSongUrl(queue[idx]);
-          preloadAudios[pi].load();   // 立即开始下载
+          const song = queue[idx];
+          if (isIOS) {
+            fetchAndCache(song);   // iOS：用 fetch 下载到内存
+          } else {
+            preloadAudios[pi].src = '/audio/' + encodeSongUrl(song);
+            preloadAudios[pi].load();   // 其他系统：用音频元素预下载
+          }
         }
       }
     }
@@ -1719,6 +1764,7 @@
       if (answerTimer) { clearTimeout(answerTimer); answerTimer = null; }
       songAudio.pause();
       preloadAudios.forEach(a => a.removeAttribute('src'));   // 停止预加载
+      clearBlobCache();   // 释放 iOS 内存缓存
       if (twoPlayer) { showResult2P(); } else { showResult(); }
     }
 
@@ -1855,7 +1901,7 @@
 
       // 载入并尝试自动播放
       setSongLoading(true);
-      songAudio.src = '/audio/' + encodeSongUrl(currentSong);
+      songAudio.src = songSrc(currentSong);
       songAudio.volume = parseFloat(volumeSlider.value);
       songAudio.play().catch(() => {});
 
@@ -2003,6 +2049,7 @@
       songAudio.removeAttribute('src');
       songAudio.load();          // 清空当前歌曲
       preloadAudios.forEach(a => a.removeAttribute('src'));   // 停止预加载
+      clearBlobCache();   // 释放 iOS 内存缓存
       correct = 0; wrong = 0; answered = 0; total = 0;
       queue = []; queueIndex = 0;
       gameScope = 'mixed';
