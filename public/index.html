@@ -221,13 +221,30 @@
       letter-spacing: 3px;
       font-size: 15px;
     }
+    /* 主菜单 Logo 图片（位于大标题上方） */
+    .main-logo {
+      width: 240px;                /* 显示宽度 */
+      max-width: 70vw;             /* 小屏幕不超过屏幕宽度的 70% */
+      height: auto;
+      margin: 0 auto 20px;
+      display: block;
+      filter: drop-shadow(0 0 14px rgba(0, 212, 255, 0.25));   /* 发光效果，和主题呼应 */
+    }
+    /* 主页面加载中的文字提示（进度条下方） */
+    .loading-text {
+      margin: 0 0 36px;
+      color: var(--text-secondary);
+      letter-spacing: 2px;
+      font-size: 13px;
+      text-align: center;
+    }
 
     /* 主页面加载进度条 */
     .loading-bar {
       position: relative;
       height: 8px;
       max-width: 340px;
-      margin: 0 auto 36px;         /* 水平居中，下方留白 */
+      margin: 0 auto 8px;          /* 水平居中，下方紧贴“加载中...”文字 */
       border-radius: 999px;        /* 两侧大圆角 */
       border: 1px solid var(--bar-border);   /* 白色边框（浅色主题下为深金色） */
       background: var(--bar-track);          /* 未完成部分为白色 */
@@ -782,6 +799,7 @@
     @media (max-width: 520px) {
       .view { padding: 24px 12px 100px; }
       .logo { font-size: 40px; letter-spacing: 3px; }
+      .main-logo { width: 190px; margin-bottom: 16px; }
       .menu-box { padding: 30px 18px 26px; }
       .result-box { padding: 30px 16px; }
       .mode-row { flex-direction: column; align-items: stretch; }
@@ -816,6 +834,7 @@
   <!-- ================= 画面一：主菜单 ================= -->
   <section id="mainMenu" class="view">
     <div class="menu-box glass">
+      <img class="main-logo" src="/logo.png" alt="HoYoGuess">
       <h1 class="logo">HoYoGuess</h1>
       <p class="subtitle">HOYO-MIX · 猜歌游戏</p>
 
@@ -823,6 +842,7 @@
       <div class="loading-bar" id="loadingBar">
         <div class="loading-fill" id="loadingFill"></div>
       </div>
+      <p class="loading-text" id="loadingText">加载中...</p>
 
       <div class="mode-row">
         <button class="btn btn-gold" id="btnCustom">自选模式</button>
@@ -2118,7 +2138,10 @@
       setupBGM().then(advanceLoading)
     ]).then(() => {
       // 等进度条走满的过渡动画结束再隐藏
-      setTimeout(() => loadingBar.classList.add('hidden'), 600);
+      setTimeout(() => {
+        loadingBar.classList.add('hidden');
+        document.getElementById('loadingText').classList.add('hidden');   // “加载中...”一起隐藏
+      }, 600);
     });
   </script>
 </body>
