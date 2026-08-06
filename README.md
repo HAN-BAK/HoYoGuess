@@ -8,13 +8,13 @@
 
 BilBili：天空岛的小派蒙  ↪https://space.bilibili.com/1700725349
 
-一个专门猜 HOYO-MiX（米哈游）音乐的网页游戏。歌曲存放在 Backblaze B2 云存储（私有桶）中，部署在 Vercel 上，随时随地打开网页就能玩。
+一个专门猜 HOYO-MiX（米哈游）音乐的网页游戏。歌曲存放在缤纷云 S4 云存储（私有桶）中，部署在 Vercel 上，随时随地打开网页就能玩。
 
 拥有从崩坏学园2到绝区零的HOYO-MiX全曲库，快来挑战，来证明你是否是HOYO-MiX的忠实粉丝吧！！🎵
 
 ## 功能特性
 
-- 🎵 **歌曲来源**：从 Backblaze B2 私有桶读取歌曲，支持“游戏名文件夹 / 子文件夹 / 歌曲.mp3”的层级结构，自动按游戏分类
+- 🎵 **歌曲来源**：从缤纷云 S4 私有桶读取歌曲，支持“游戏名文件夹 / 子文件夹 / 歌曲.mp3”的层级结构，自动按游戏分类
 - 🎮 **多种玩法**：
   - **自选模式**：先选曲库（点进游戏可选“全部曲目”或具体专辑），再设置题目数（不能超过曲库歌曲数），答完自动结算
   - **无尽模式**：选曲库（可选专辑）后直接开始，永不结束，手动“结束本轮”才结算
@@ -34,8 +34,9 @@ BilBili：天空岛的小派蒙  ↪https://space.bilibili.com/1700725349
 
 - 后端：Node.js + Express
 - 前端：原生 HTML + CSS + JavaScript（无任何前端框架）
-- 存储：Backblaze B2 云存储（私有桶）
-- 部署：Vercel（GitHub 自动部署）
+- 存储：缤纷云 S4 云存储（S3 兼容、私有桶）
+- 部署：Vercel（GitHub 自动部署），主域名 hoyoguess.com
+- 加速：Cloudflare Worker 缓存音频（audio.hoyoguess.com），为缤纷云省流量
 
 ## 目录结构
 
@@ -43,11 +44,12 @@ BilBili：天空岛的小派蒙  ↪https://space.bilibili.com/1700725349
 GuessMusic
 ├── server.js          # 后端服务器（Express，Vercel 直接调用）
 ├── vercel.json        # Vercel 路由配置
-├── worker.js          # Cloudflare CDN 加速 Worker（可选）
+├── worker.js          # Cloudflare CDN 加速 Worker（audio.hoyoguess.com）
 ├── package.json       # 项目配置与依赖
-├── config.js          # B2 本地配置（含密钥，已加入 .gitignore，不上传）
+├── config.js          # 缤纷云本地配置（含密钥，已加入 .gitignore，不上传）
 ├── .gitignore         # 忽略清单
 ├── icon.png           # 网站图标
+├── mianlogo.png       # README 顶部大图
 ├── public/
 │   ├── index.html     # 前端全部代码（界面 + 逻辑）
 │   └── icon.png       # 部署时提供网站图标
@@ -63,15 +65,17 @@ GuessMusic
 # 1. 安装依赖（第一次需要）
 npm install
 
-# 2. 准备 B2 配置：复制下方内容保存为 config.js（密钥换成你自己的）
+# 2. 准备缤纷云配置：复制下方内容保存为 config.js（密钥换成你自己的）
 ```
 
 ```js
 module.exports = {
-  b2Endpoint: 'https://api.backblazeb2.com',
-  b2KeyId: '你的密钥ID',
-  b2ApplicationKey: '你的应用密钥',
-  b2BucketName: '你的桶名'
+  s3Endpoint: 'https://s3.bitiful.net',   // 缤纷云 S3 接口地址，一般不用改
+  s3Region: 'cn-east-1',                  // 区域
+  s3AccessKey: '你的AccessKey',
+  s3SecretKey: '你的SecretKey',
+  s3BucketName: 'hoyo-music',             // 桶名
+  cdnBase: ''                             // 本地开发留空
 };
 ```
 
@@ -86,7 +90,36 @@ http://localhost:3000
 注意事项：
 
 - 桶内 `BGMusic/` 文件夹下的音频不会被当作题目歌曲；
-- 支持背景音乐格式：mp3 / wav / ogg / m4a / flac。
+- 支持背景音乐格式：mp3 / wav / ogg / m4a / flac；
+- 缤纷云桶内的文件结构要与原来一致：`游戏名文件夹 / 子文件夹 / 歌曲.mp3`，背景音乐放在 `BGMusic/` 下。
+
+## Vercel 部署配置（环境变量）
+
+在 Vercel 项目的 Settings → Environment Variables 中配置：
+
+| 变量名 | 填写内容 |
+|---|---|
+| `S3_ENDPOINT` | `https://s3.bitiful.net` |
+| `S3_REGION` | `cn-east-1` |
+| `S3_ACCESS_KEY` | 你的缤纷云 Access Key |
+| `S3_SECRET_KEY` | 你的缤纷云 Secret Key |
+| `S3_BUCKET_NAME` | `hoyo-music` |
+| `CDN_BASE` | `https://audio.hoyoguess.com`（音频走 CDN；没配好 CDN 前可以留空） |
+
+旧的 `B2_KEY_ID`、`B2_APPLICATION_KEY`、`B2_BUCKET_NAME`、`B2_CDN_BASE` 可以删除。
+
+## Cloudflare Worker（CDN）配置
+
+在 Cloudflare 的 Worker 中配置以下密钥（Settings → Variables and Secrets）：
+
+| 变量名 | 填写内容 |
+|---|---|
+| `S3_ACCESS_KEY` | 你的缤纷云 Access Key |
+| `S3_SECRET_KEY` | 你的缤纷云 Secret Key |
+| `S3_BUCKET_NAME` | `hoyo-music` |
+| `S3_REGION` | `cn-east-1` |
+
+并把 Worker 绑定到 `audio.hoyoguess.com`（域名需要先加入 Cloudflare 并切换 Nameserver）。
 
 ## 游戏说明
 
@@ -107,7 +140,7 @@ http://localhost:3000
 
 **歌单是空的？**
 
-- 检查 B2 桶里是否真的上传了 mp3 文件；
+- 检查缤纷云桶里是否真的上传了 mp3 文件；
 - 新上传的文件需要等待 60 秒缓存过期后刷新页面；
 - 检查环境变量或 `config.js` 中的密钥和桶名是否正确。
 
@@ -120,3 +153,8 @@ http://localhost:3000
 
 - 点击页面任意位置解锁浏览器自动播放限制；
 - 确认歌曲文件本身可以正常播放。
+
+**音频加载很慢？**
+
+- 确认 `CDN_BASE` 已配置为 `https://audio.hoyoguess.com`；
+- 第一次播放某首歌时 CDN 需要回源拉取一次，之后就会走缓存，速度会快很多。
