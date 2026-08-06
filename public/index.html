@@ -1200,6 +1200,16 @@
       } catch (e) { /* 存储满了就忽略，不影响使用 */ }
     }
 
+    // 歌单接口：优先走 CDN（有边缘缓存，快且稳定），失败退回本站后端
+    async function fetchListJson(path) {
+      try {
+        const res = await fetch('https://audio.hoyoguess.com' + path, { cache: 'no-store' });
+        if (res.ok) return await res.json();
+      } catch (e) { /* CDN 不可用就退回本站 */ }
+      const res2 = await fetch(path);
+      return await res2.json();
+    }
+
     async function loadSongs() {
       // 先用本地缓存顶上来（24 小时内有效），加载条立刻完成，页面马上能玩
       const cached = readLocalCache(SONGS_CACHE_KEY, 24 * 60 * 60 * 1000);
@@ -1215,8 +1225,7 @@
     // 从后端拉取最新歌单并更新缓存
     async function refreshSongs() {
       try {
-        const res = await fetch('/api/songs');      // 请求后端拿歌单
-        const list = await res.json();
+        const list = await fetchListJson('/api/songs');   // 请求歌单（CDN 优先）
         if (list && list.length) {
           songs = list;
           writeLocalCache(SONGS_CACHE_KEY, list);
@@ -1456,8 +1465,7 @@
         // 背景音乐列表基本不变，优先用本地缓存（24 小时内），省一次网络请求
         let list = readLocalCache(BGM_CACHE_KEY, 24 * 60 * 60 * 1000);
         if (!list) {
-          const res = await fetch('/api/bgmusic');    // 请求后端拿背景音乐列表
-          list = await res.json();
+          list = await fetchListJson('/api/bgmusic');   // 请求背景音乐列表（CDN 优先）
           writeLocalCache(BGM_CACHE_KEY, list);
         }
         if (!list.length) {
