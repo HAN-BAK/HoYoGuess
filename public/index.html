@@ -1022,12 +1022,17 @@
     // 音频元素
     const bgmAudio  = document.getElementById('bgmAudio');   // 背景音乐
     const songAudio = document.getElementById('songAudio');  // 当前题目歌曲
-    // 隐藏的预加载音频：提前拉取下一首歌，切题时几乎秒开
-    const preloadAudio = document.createElement('audio');
-    preloadAudio.preload = 'auto';
-    preloadAudio.volume = 0;                   // 静音：只提前下载，不发声
-    preloadAudio.muted = true;
-    document.body.appendChild(preloadAudio);   // 必须挂到页面里，浏览器才会真正开始下载
+    // 隐藏的预加载音频：提前拉取后面 4 首歌，切题时几乎秒开
+    // （4 个静音音频元素，各自负责一首歌；必须挂到页面里浏览器才会真正开始下载）
+    const preloadAudios = [];
+    for (let pi = 0; pi < 4; pi++) {
+      const pa = document.createElement('audio');
+      pa.preload = 'auto';
+      pa.volume = 0;                    // 静音：只提前下载，不发声
+      pa.muted = true;
+      document.body.appendChild(pa);
+      preloadAudios.push(pa);
+    }
 
     // 播放器控件
     const playBtn       = document.getElementById('playBtn');
@@ -1635,11 +1640,15 @@
       preloadNextSong();   // 出题后立刻开始预加载下一首（利用作答时间下载）
     }
 
-    // 提前预加载下一首歌（利用答题后的等待时间，切题时几乎秒开）
+    // 提前预加载后面 4 首歌（利用作答时间下载，切题时几乎秒开）
     function preloadNextSong() {
-      if (queueIndex < queue.length) {
-        preloadAudio.src = '/audio/' + encodeSongUrl(queue[queueIndex]);
-        preloadAudio.load();   // 立即开始下载下一首
+      // 当前题的下一题从 queueIndex 开始，依次预加载 4 首
+      for (let pi = 0; pi < 4; pi++) {
+        const idx = queueIndex + pi;
+        if (idx < queue.length) {
+          preloadAudios[pi].src = '/audio/' + encodeSongUrl(queue[idx]);
+          preloadAudios[pi].load();   // 立即开始下载
+        }
       }
     }
 
@@ -1689,7 +1698,7 @@
     function endRound() {
       if (answerTimer) { clearTimeout(answerTimer); answerTimer = null; }
       songAudio.pause();
-      preloadAudio.removeAttribute('src');
+      preloadAudios.forEach(a => a.removeAttribute('src'));   // 停止预加载
       if (twoPlayer) { showResult2P(); } else { showResult(); }
     }
 
@@ -1973,7 +1982,7 @@
       songAudio.pause();
       songAudio.removeAttribute('src');
       songAudio.load();          // 清空当前歌曲
-      preloadAudio.removeAttribute('src');
+      preloadAudios.forEach(a => a.removeAttribute('src'));   // 停止预加载
       correct = 0; wrong = 0; answered = 0; total = 0;
       queue = []; queueIndex = 0;
       gameScope = 'mixed';
