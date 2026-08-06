@@ -1180,7 +1180,7 @@
     // 本地缓存：把歌单存到浏览器里，下次打开页面立刻能用，后台再悄悄更新。
     // 这样主页加载条不会被慢速的云端接口卡住，几乎秒开
     const SONGS_CACHE_KEY = 'hoyoguess_songs_v1';
-    const BGM_CACHE_KEY   = 'hoyoguess_bgm_v1';
+    const BGM_CACHE_KEY   = 'hoyoguess_bgm_v2';   // v2：修复“空列表也被缓存”导致背景音乐消失的问题
 
     // 读取本地缓存（超过有效期就当作没有）
     function readLocalCache(key, maxAgeMs) {
@@ -1464,11 +1464,11 @@
       try {
         // 背景音乐列表基本不变，优先用本地缓存（24 小时内），省一次网络请求
         let list = readLocalCache(BGM_CACHE_KEY, 24 * 60 * 60 * 1000);
-        if (!list) {
+        if (!list || !list.length) {   // 缓存为空（或根本没有）时重新拉取
           list = await fetchListJson('/api/bgmusic');   // 请求背景音乐列表（CDN 优先）
-          writeLocalCache(BGM_CACHE_KEY, list);
+          if (list && list.length) writeLocalCache(BGM_CACHE_KEY, list);   // 只有拿到有效列表才缓存
         }
-        if (!list.length) {
+        if (!list || !list.length) {
           bgmBtn.disabled = true;                   // 没有背景音乐时禁用开关按钮
           return;
         }
