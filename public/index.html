@@ -1177,18 +1177,57 @@
     }
 
     // ---------- 4. 歌库加载 ----------
+    // 本地缓存：把歌单存到浏览器里，下次打开页面立刻能用，后台再悄悄更新。
+    // 这样主页加载条不会被慢速的云端接口卡住，几乎秒开
+    const SONGS_CACHE_KEY = 'hoyoguess_songs_v1';
+    const BGM_CACHE_KEY   = 'hoyoguess_bgm_v1';
+
+    // 读取本地缓存（超过有效期就当作没有）
+    function readLocalCache(key, maxAgeMs) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (Date.now() - data.time > maxAgeMs) return null;
+        return data.value;
+      } catch (e) { return null; }
+    }
+
+    // 写入本地缓存
+    function writeLocalCache(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify({ time: Date.now(), value }));
+      } catch (e) { /* 存储满了就忽略，不影响使用 */ }
+    }
+
     async function loadSongs() {
+      // 先用本地缓存顶上来（24 小时内有效），加载条立刻完成，页面马上能玩
+      const cached = readLocalCache(SONGS_CACHE_KEY, 24 * 60 * 60 * 1000);
+      if (cached && cached.length) {
+        songs = cached;
+        refreshSongs();        // 不阻塞加载条，后台悄悄拉最新歌单
+        return;
+      }
+      // 第一次访问（没有缓存）：等网络请求完成
+      await refreshSongs();
+    }
+
+    // 从后端拉取最新歌单并更新缓存
+    async function refreshSongs() {
       try {
         const res = await fetch('/api/songs');      // 请求后端拿歌单
         const list = await res.json();
-        songs = list;
+        if (list && list.length) {
+          songs = list;
+          writeLocalCache(SONGS_CACHE_KEY, list);
+        }
         // 歌太少时弹窗提示（每次刷新页面只弹一次）
         if (songs.length < 4 && !lowSongsAlerted) {
           lowSongsAlerted = true;
           alert('小派蒙正在努力帮你加载中哦');
         }
       } catch (err) {
-        // 获取歌单失败就静默跳过，不打扰用户
+        // 获取歌单失败：有缓存就继续用缓存，不打扰用户
       }
     }
 
@@ -1414,8 +1453,13 @@
     // ---------- 5. 背景音乐 ----------
     async function setupBGM() {
       try {
-        const res = await fetch('/api/bgmusic');    // 请求后端拿背景音乐列表
-        const list = await res.json();
+        // 背景音乐列表基本不变，优先用本地缓存（24 小时内），省一次网络请求
+        let list = readLocalCache(BGM_CACHE_KEY, 24 * 60 * 60 * 1000);
+        if (!list) {
+          const res = await fetch('/api/bgmusic');    // 请求后端拿背景音乐列表
+          list = await res.json();
+          writeLocalCache(BGM_CACHE_KEY, list);
+        }
         if (!list.length) {
           bgmBtn.disabled = true;                   // 没有背景音乐时禁用开关按钮
           return;

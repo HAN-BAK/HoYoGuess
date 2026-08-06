@@ -109,9 +109,9 @@ async function listAllFiles() {
   return files;
 }
 
-// 带 60 秒缓存的文件列表（避免每次请求都去云存储翻一遍）
+// 带 10 分钟缓存的文件列表（避免每次请求都去云存储翻一遍）
 async function getFileListCached() {
-  if (songListCache && Date.now() - songListCacheTime < 60 * 1000) {
+  if (songListCache && Date.now() - songListCacheTime < 10 * 60 * 1000) {
     return songListCache;
   }
   const files = await listAllFiles();
