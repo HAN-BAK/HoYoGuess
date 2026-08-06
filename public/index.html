@@ -1117,7 +1117,7 @@
         // 歌太少时弹窗提示（每次刷新页面只弹一次）
         if (songs.length < 4 && !lowSongsAlerted) {
           lowSongsAlerted = true;
-          alert('小派蒙正在努力维护中哦');
+          alert('小派蒙正在努力帮你加载中哦');
         }
       } catch (err) {
         // 获取歌单失败就静默跳过，不打扰用户
@@ -1141,7 +1141,7 @@
     // 显示“选择曲库”界面（m：'custom' 自选 / 'endless' 无尽）
     function showGameSelect(m) {
       if (songs.length < 4) {
-        alert('小派蒙正在努力维护中哦');
+        alert('小派蒙正在努力帮你加载中哦');  
         return;
       }
       pendingMode = m;
@@ -1693,7 +1693,7 @@
     // 开始游戏（m：'custom' / 'endless'，曲库范围已在前面设置好）
     function startGame(m) {
       if (songs.length < 4) {
-        alert('小派蒙正在努力维护中哦');
+        alert('小派蒙正在努力帮你加载中哦');  
         return;
       }
       if (songPool.length === 0) {
@@ -1729,7 +1729,7 @@
     // 开始双人游戏（m：'custom' / 'endless'）
     function startGame2P(m) {
       if (songs.length < 4) {
-        alert('小派蒙正在努力维护中哦');
+        alert('小派蒙正在努力帮你加载中哦');  
         return;
       }
       if (songPool.length === 0) {
