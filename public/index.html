@@ -1025,6 +1025,9 @@
     // 隐藏的预加载音频：提前拉取下一首歌，切题时几乎秒开
     const preloadAudio = document.createElement('audio');
     preloadAudio.preload = 'auto';
+    preloadAudio.volume = 0;                   // 静音：只提前下载，不发声
+    preloadAudio.muted = true;
+    document.body.appendChild(preloadAudio);   // 必须挂到页面里，浏览器才会真正开始下载
 
     // 播放器控件
     const playBtn       = document.getElementById('playBtn');
@@ -1486,16 +1489,14 @@
       progressTrack.classList.toggle('loading', loading);
       if (loading) {
         progressFill.style.width = '15%';   // 开始加载的初始百分比
-        timeText.textContent = '00:00 / 00:00';
+        timeText.textContent = '加载中......';   // 加载时显示加载提示
       }
     }
     songAudio.addEventListener('loadstart', () => setSongLoading(true));
     songAudio.addEventListener('loadedmetadata', () => {
-      // 元数据就绪：推进到 60%，并显示总时长
+      // 元数据就绪：推进到 60%（时间显示保持“加载中……”）
       if (songLoading) {
         progressFill.style.width = '60%';
-        const d = songAudio.duration || 0;
-        timeText.textContent = '00:00 / ' + fmtTime(d);
       }
     });
     songAudio.addEventListener('progress', () => {
@@ -1522,6 +1523,7 @@
       timeText.textContent = fmtTime(songAudio.currentTime) + ' / ' + fmtTime(d);
     });
     songAudio.addEventListener('loadedmetadata', () => {
+      if (songLoading) return;   // 还在加载中时，保持“加载中……”显示
       const d = songAudio.duration || 0;
       timeText.textContent = '00:00 / ' + fmtTime(d);
     });
@@ -1630,12 +1632,14 @@
       songAudio.play().catch(() => {});
 
       updateScore();
+      preloadNextSong();   // 出题后立刻开始预加载下一首（利用作答时间下载）
     }
 
     // 提前预加载下一首歌（利用答题后的等待时间，切题时几乎秒开）
     function preloadNextSong() {
       if (queueIndex < queue.length) {
         preloadAudio.src = '/audio/' + encodeSongUrl(queue[queueIndex]);
+        preloadAudio.load();   // 立即开始下载下一首
       }
     }
 
@@ -1660,7 +1664,6 @@
       optionButtons.forEach(b => { b.disabled = true; });  // 禁用所有选项
 
       updateScore();
-      preloadNextSong();       // 趁 1.5 秒等待时间，提前拉取下一首歌
       // 1.5 秒后自动进入下一题
       answerTimer = setTimeout(() => {
         answerTimer = null;
@@ -1826,6 +1829,8 @@
       songAudio.src = '/audio/' + encodeSongUrl(currentSong);
       songAudio.volume = parseFloat(volumeSlider.value);
       songAudio.play().catch(() => {});
+
+      preloadNextSong();   // 双人模式同样预加载下一首
     }
 
     // 双人模式作答（player：1 或 2，index：选项序号）
