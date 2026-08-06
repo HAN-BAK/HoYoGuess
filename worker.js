@@ -96,6 +96,21 @@ async function buildSignedRequest(env, fileName) {
   };
 }
 
+// 拉取音频：遇到 Cloudflare 回源超时（522）等 5xx 错误时自动重试，
+// 避免偶发的网络抖动导致歌曲加载失败（第一次失败，第二次往往就成功了）
+async function fetchWithRetry(target, init, attempts) {
+  let lastRes = null;
+  for (let i = 0; i < attempts; i++) {
+    lastRes = await fetch(target, init);
+    if (lastRes.status < 500) {
+      return lastRes;   // 正常响应（200 / 206 / 404 等），直接返回
+    }
+    // 5xx 错误：稍等片刻再试一次（400ms、800ms 递增）
+    await new Promise(function (resolve) { setTimeout(resolve, 400 * (i + 1)); });
+  }
+  return lastRes;   // 重试完仍然失败，返回最后一次结果
+}
+
 export default {
   async fetch(request, env) {
     // 防止没有配置密钥时直接报错，先做检查
@@ -119,13 +134,13 @@ export default {
     }
 
     // 从缤纷云拉取音频；cf.cacheTtl 让 Cloudflare 按文件路径缓存一天
-    const upstream = await fetch(signed.url, {
+    const upstream = await fetchWithRetry(signed.url, {
       headers,
       cf: {
         cacheTtl: 86400,
         cacheKey: url.origin + url.pathname
       }
-    });
+    }, 3);
 
     const resp = new Response(upstream.body, {
       status: upstream.status,
