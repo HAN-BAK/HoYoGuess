@@ -834,7 +834,8 @@
   <!-- ================= 画面一：主菜单 ================= -->
   <section id="mainMenu" class="view">
     <div class="menu-box glass">
-      <img class="main-logo" src="/logo.png" alt="HoYoGuess">
+      <!-- Logo 优先走 CDN（快），CDN 不可用时自动退回本站 -->
+      <img class="main-logo" src="https://audio.hoyoguess.com/logo.png" onerror="this.onerror=null;this.src='/logo.png';" alt="HoYoGuess">
       <h1 class="logo">HoYoGuess</h1>
       <p class="subtitle">HOYO-MIX · 猜歌游戏</p>
 

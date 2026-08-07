@@ -215,8 +215,9 @@ export default {
     if (url.pathname === '/api/bgmusic') return handleList(request, env, true);
     // URL 路径就是桶内的文件路径，例如 /原神/歌.mp3
     const fileName = decodeURIComponent(url.pathname.replace(/^\//, ''));
-    if (!/\.(mp3|wav|ogg|m4a|flac)$/i.test(fileName)) {
-      return new Response('不支持的音频格式', { status: 400 });
+    // 允许音频和图片（主页 Logo 等静态图片也从 CDN 出）
+    if (!/\.(mp3|wav|ogg|m4a|flac|png|jpe?g|webp|svg|ico|gif)$/i.test(fileName)) {
+      return new Response('不支持的文件格式', { status: 400 });
     }
 
     // 生成带签名的缤纷云请求
