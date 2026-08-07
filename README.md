@@ -10,7 +10,7 @@ BilBili：天空岛的小派蒙  ↪https://space.bilibili.com/1700725349
 
 一个专门猜 HOYO-MiX（米哈游）音乐的网页游戏。歌曲存放在缤纷云 S4 云存储（私有桶）中，部署在 Vercel 上，随时随地打开网页就能玩。
 
-拥有从崩坏学园2到绝区零的HOYO-MiX全曲库，快来挑战，来证明你是否是HOYO-MiX的忠实粉丝吧！！🎵
+拥有从崩坏学园2到米哈游最新已上线游戏的HOYO-MiX全曲库，快来挑战，来证明你是否是HOYO-MiX的忠实粉丝吧！！🎵
 
 ## 功能特性
 
@@ -46,7 +46,7 @@ GuessMusic
 ├── vercel.json        # Vercel 路由配置
 ├── worker.js          # Cloudflare CDN 加速 Worker（audio.hoyoguess.com）
 ├── package.json       # 项目配置与依赖
-├── config.js          # 缤纷云本地配置（含密钥，已加入 .gitignore，不上传）
+├── config.js          # 缤纷云本地配置（含密钥）
 ├── .gitignore         # 忽略清单
 ├── icon.png           # 网站图标
 ├── mianlogo.png       # README 顶部大图
@@ -91,7 +91,7 @@ http://localhost:3000
 
 - 桶内 `BGMusic/` 文件夹下的音频不会被当作题目歌曲；
 - 支持背景音乐格式：mp3 / wav / ogg / m4a / flac；
-- 缤纷云桶内的文件结构要与原来一致：`游戏名文件夹 / 子文件夹 / 歌曲.mp3`，背景音乐放在 `BGMusic/` 下。
+- 缤纷云桶内的文件结构要与原来一致：`游戏名文件夹 / 专辑文件夹 / 歌曲.mp3`，背景音乐放在 `BGMusic/` 下。
 
 ## Vercel 部署配置（环境变量）
 
@@ -105,8 +105,6 @@ http://localhost:3000
 | `S3_SECRET_KEY` | 你的缤纷云 Secret Key |
 | `S3_BUCKET_NAME` | `hoyo-music` |
 | `CDN_BASE` | `https://audio.hoyoguess.com`（音频走 CDN；没配好 CDN 前可以留空） |
-
-旧的 `B2_KEY_ID`、`B2_APPLICATION_KEY`、`B2_BUCKET_NAME`、`B2_CDN_BASE` 可以删除。
 
 ## Cloudflare Worker（CDN）配置
 
