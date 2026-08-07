@@ -1493,6 +1493,18 @@
     }
     document.addEventListener('pointerdown', unlockBGM);
 
+    // iOS：首次点击页面时初始化 Web Audio 音量接管，并恢复音频上下文
+    // （iOS 不允许网页直接改 audio.volume，必须用 Gain 节点才行）
+    document.addEventListener('pointerdown', function iosVolumeInit() {
+      if (isIOS) {
+        setupIOSVolume();
+        resumeIOSAudio();
+      }
+    });
+    // 万一音频上下文被系统挂起，播放时自动恢复
+    songAudio.addEventListener('play', resumeIOSAudio);
+    bgmAudio.addEventListener('play', resumeIOSAudio);
+
     // 根据当前界面控制背景音乐：
     // 只有游戏画面暂停；主菜单、选择曲库、填写题目数、结算画面都播放
     function applyBGM() {
@@ -1667,24 +1679,49 @@
     progressTrack.addEventListener('pointerup', () => { isDragging = false; });
     progressTrack.addEventListener('pointercancel', () => { isDragging = false; });
 
+    // ---------- iOS 音量（Web Audio 增益节点接管） ----------
+    let iosCtx = null;        // 音频上下文（仅 iOS 创建）
+    let iosGain = null;       // 增益节点：就是音量
+    function setupIOSVolume() {
+      if (!isIOS || iosCtx) return;
+      try {
+        // 跨域音频必须声明 anonymous，Web Audio 才能读到声音（CDN 已允许跨域）
+        songAudio.crossOrigin = 'anonymous';
+        bgmAudio.crossOrigin = 'anonymous';
+        iosCtx = new (window.AudioContext || window.webkitAudioContext)();
+        iosGain = iosCtx.createGain();
+        iosGain.gain.value = currentVolume;
+        iosGain.connect(iosCtx.destination);
+        // 把两个音频都接入增益节点，音量滑块就能控制它们了
+        iosCtx.createMediaElementSource(songAudio).connect(iosGain);
+        iosCtx.createMediaElementSource(bgmAudio).connect(iosGain);
+      } catch (e) {
+        iosCtx = null; iosGain = null;   // 万一失败就退回系统默认（音量条在 iOS 上无效）
+      }
+    }
+    function resumeIOSAudio() {
+      if (iosCtx && iosCtx.state === 'suspended') iosCtx.resume().catch(() => {});
+    }
+
     // 音量滑块
-    let lastVolume = 1;   // 记住静音前的音量，方便恢复
-    volumeSlider.addEventListener('input', () => {
-      const v = parseFloat(volumeSlider.value);
-      songAudio.volume = v;
+    let lastVolume = 1;        // 记住静音前的音量，方便恢复
+    let currentVolume = 1;     // 当前音量（0~1）
+    function setVolume(v) {
+      v = Math.max(0, Math.min(1, v));
+      currentVolume = v;
+      if (isIOS && iosGain) {
+        iosGain.gain.value = v;      // iOS：走增益节点
+      } else {
+        songAudio.volume = v;        // 其他系统：直接改音量
+      }
+      volumeSlider.value = v;
       updateVolumeIcon(v);
-    });
+    }
+    volumeSlider.addEventListener('input', () => setVolume(parseFloat(volumeSlider.value)));
     // 点击喇叭图标 = 静音/取消静音
     volumeBtn.addEventListener('click', () => {
-      if (songAudio.volume > 0) {
-        lastVolume = songAudio.volume;
-        songAudio.volume = 0;
-        volumeSlider.value = 0;
-      } else {
-        songAudio.volume = lastVolume || 1;
-        volumeSlider.value = songAudio.volume;
-      }
-      updateVolumeIcon(songAudio.volume);
+      if (currentVolume > 0) { lastVolume = currentVolume; setVolume(0); }
+      else { setVolume(lastVolume || 1); }
     });
     function updateVolumeIcon(v) {
       iconVol.classList.toggle('hidden', v <= 0);
@@ -1745,7 +1782,7 @@
       // 载入这首歌并尝试自动播放
       setSongLoading(true);
       songAudio.src = songSrc(currentSong);
-      songAudio.volume = parseFloat(volumeSlider.value);
+      setVolume(parseFloat(volumeSlider.value));
       songAudio.play().catch(() => {});
 
       updateScore();
@@ -1954,7 +1991,7 @@
       // 载入并尝试自动播放
       setSongLoading(true);
       songAudio.src = songSrc(currentSong);
-      songAudio.volume = parseFloat(volumeSlider.value);
+      setVolume(parseFloat(volumeSlider.value));
       songAudio.play().catch(() => {});
 
       preloadNextSong();   // 双人模式同样预加载下一首
