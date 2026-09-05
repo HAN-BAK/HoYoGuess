@@ -2288,7 +2288,8 @@
     import { BAClickFX } from '/vendor/ba-click-fx.js';
     try {
       // 主题色用网站主色调青色；如需原版蓝色可去掉 themeColor 或改成 '#4ca7ff'
-      window.baClickFX = new BAClickFX({ themeColor: '#00D4FF' });
+      // trailAlways: true = 鼠标随便移动就显示拖尾（无需按住）
+      window.baClickFX = new BAClickFX({ themeColor: '#00D4FF', trailAlways: true });
     } catch (err) {
       // 特效初始化失败不影响游戏，静默跳过
     }
