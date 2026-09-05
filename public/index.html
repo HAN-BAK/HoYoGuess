@@ -15,6 +15,11 @@
       padding: 0;
       box-sizing: border-box;
     }
+    /* 禁止全文选中与复制（输入框 / 文本域除外，否则无法输入题目数） */
+    * { -webkit-user-select: none; user-select: none; }
+    input, textarea { -webkit-user-select: text; user-select: text; }
+    /* 禁止拖拽图片（防止把 Logo 拖走） */
+    img { -webkit-user-drag: none; user-drag: none; }
 
     /* ===== 主题配色变量 =====
        深色主题（默认）：深蓝紫星空 + 金/青
@@ -814,9 +819,13 @@
 </head>
 <body>
 
-  <!-- 禁止右键菜单（防止右键另存图片 / 查看源码等） -->
+  <!-- 内容保护：禁止右键菜单、禁止选中文本、禁止复制剪切、禁止拖拽图片 -->
   <script>
     document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    document.addEventListener('copy', function (e) { e.preventDefault(); });       // 禁止复制
+    document.addEventListener('cut', function (e) { e.preventDefault(); });        // 禁止剪切
+    document.addEventListener('selectstart', function (e) { e.preventDefault(); }); // 禁止选中
+    document.addEventListener('dragstart', function (e) { e.preventDefault(); });   // 禁止拖拽图片
   </script>
 
   <!-- 星空背景（星星由 JS 动态生成） -->
