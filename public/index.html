@@ -2281,5 +2281,17 @@
       }, 600);
     });
   </script>
+
+  <!-- 蔚蓝档案风点击特效 + 光标拖尾（MIT 开源，github.com/CialloKing/ba-click-fx）
+       覆盖层不拦截点击（pointer-events:none），不会挡住任何按钮 -->
+  <script type="module">
+    import { BAClickFX } from '/vendor/ba-click-fx.js';
+    try {
+      // 主题色用网站主色调青色；如需原版蓝色可去掉 themeColor 或改成 '#4ca7ff'
+      window.baClickFX = new BAClickFX({ themeColor: '#00D4FF' });
+    } catch (err) {
+      // 特效初始化失败不影响游戏，静默跳过
+    }
+  </script>
 </body>
 </html>
