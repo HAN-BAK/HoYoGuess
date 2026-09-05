@@ -814,6 +814,11 @@
 </head>
 <body>
 
+  <!-- 禁止右键菜单（防止右键另存图片 / 查看源码等） -->
+  <script>
+    document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+  </script>
+
   <!-- 星空背景（星星由 JS 动态生成） -->
   <div id="stars"></div>
 
